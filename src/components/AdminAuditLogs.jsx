@@ -8,8 +8,8 @@ export default function AdminAuditLogs() {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
 
-  const fetchLogs = async () => {
-    setLoading(true);
+  const fetchLogs = async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/audit-logs`);
       const data = await res.json();
@@ -19,14 +19,14 @@ export default function AdminAuditLogs() {
     } catch (err) {
       console.error("Error fetching audit logs:", err);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchLogs();
+    fetchLogs(false);
     const interval = setInterval(() => {
-      fetchLogs();
+      fetchLogs(true);
     }, 3000);
     return () => clearInterval(interval);
   }, []);

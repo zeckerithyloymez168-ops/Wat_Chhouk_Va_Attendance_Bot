@@ -10,9 +10,8 @@ export default function AdminAttendance({ monks, currentAdmin }) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
 
-  const fetchAttendance = async () => {
-    setLoading(true);
-    setMessage(null);
+  const fetchAttendance = async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/attendance?date=${selectedDate}&session=${session}`);
       const data = await res.json();
@@ -31,15 +30,15 @@ export default function AdminAttendance({ monks, currentAdmin }) {
     } catch (err) {
       console.error("Error fetching attendance:", err);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   };
 
   useEffect(() => {
     if (monks.length > 0) {
-      fetchAttendance();
+      fetchAttendance(false);
       const interval = setInterval(() => {
-        fetchAttendance();
+        fetchAttendance(true);
       }, 3000);
       return () => clearInterval(interval);
     }

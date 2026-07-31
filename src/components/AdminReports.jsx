@@ -9,8 +9,8 @@ export default function AdminReports({ monks, onRefreshNeeded }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [processingId, setProcessingId] = useState(null);
 
-  const fetchAllSummaries = async () => {
-    setLoading(true);
+  const fetchAllSummaries = async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
     try {
       const results = await Promise.all(
         monks.map(async (monk) => {
@@ -30,13 +30,17 @@ export default function AdminReports({ monks, onRefreshNeeded }) {
     } catch (err) {
       console.error("Error fetching summaries/analytics:", err);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   };
 
   useEffect(() => {
     if (monks.length > 0) {
-      fetchAllSummaries();
+      fetchAllSummaries(false);
+      const interval = setInterval(() => {
+        fetchAllSummaries(true);
+      }, 4000);
+      return () => clearInterval(interval);
     } else {
       setLoading(false);
     }

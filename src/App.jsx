@@ -30,7 +30,8 @@ export default function App() {
   const isAdmin = currentMonk?.role === 'admin';
   const isAdminTab = ['attendance', 'leave', 'reports', 'users', 'audit', 'holidays'].includes(activeTab);
 
-  const fetchMonks = async () => {
+  const fetchMonks = async (isSilent = false) => {
+    if (!isSilent && monks.length === 0) setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/monks`);
       const data = await res.json();
@@ -47,16 +48,16 @@ export default function App() {
     } catch (err) {
       console.error("Error fetching monks:", err);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchMonks();
+    fetchMonks(false);
 
     // Real-Time live background sync interval (every 3 seconds)
     const syncInterval = setInterval(() => {
-      fetchMonks();
+      fetchMonks(true);
     }, 3000);
 
     // Telegram Mini App Auto-Auth Integration

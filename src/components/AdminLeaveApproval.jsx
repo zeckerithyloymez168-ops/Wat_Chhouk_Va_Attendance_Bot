@@ -8,8 +8,8 @@ export default function AdminLeaveApproval({ monks, currentAdmin, onActionDone }
   const [filterStatus, setFilterStatus] = useState('all');
   const [processingId, setProcessingId] = useState(null);
 
-  const fetchRequests = async () => {
-    setLoading(true);
+  const fetchRequests = async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/leave`);
       const data = await res.json();
@@ -19,14 +19,14 @@ export default function AdminLeaveApproval({ monks, currentAdmin, onActionDone }
     } catch (err) {
       console.error("Error fetching leave requests:", err);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchRequests();
+    fetchRequests(false);
     const interval = setInterval(() => {
-      fetchRequests();
+      fetchRequests(true);
     }, 3000);
     return () => clearInterval(interval);
   }, []);

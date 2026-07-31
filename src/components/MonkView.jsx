@@ -14,9 +14,9 @@ export default function MonkView({ currentMonk, onLeaveSubmitted }) {
   const [submitting, setSubmitting] = useState(false);
   const [formMsg, setFormMsg] = useState(null);
 
-  const fetchSummary = async () => {
+  const fetchSummary = async (isSilent = false) => {
     if (!currentMonk) return;
-    setLoading(true);
+    if (!isSilent) setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/monks/${currentMonk.id}/summary`);
       const data = await res.json();
@@ -26,14 +26,14 @@ export default function MonkView({ currentMonk, onLeaveSubmitted }) {
     } catch (err) {
       console.error("Error fetching monk summary:", err);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSummary();
+    fetchSummary(false);
     const interval = setInterval(() => {
-      fetchSummary();
+      fetchSummary(true);
     }, 3000);
     return () => clearInterval(interval);
   }, [currentMonk]);
