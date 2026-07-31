@@ -6,7 +6,8 @@ import AdminLeaveApproval from './components/AdminLeaveApproval';
 import AdminReports from './components/AdminReports';
 import TelegramSimulator from './components/TelegramSimulator';
 import RegisterModal from './components/RegisterModal';
-import { UserCheck, CalendarCheck, FileCheck, BarChart3, Bot, UserPlus, Sparkles } from 'lucide-react';
+import { UserCheck, CalendarCheck, FileCheck, BarChart3, Bot, UserPlus } from 'lucide-react';
+import { API_BASE } from './config';
 
 export default function App() {
   const [monks, setMonks] = useState([]);
@@ -17,7 +18,7 @@ export default function App() {
 
   const fetchMonks = async () => {
     try {
-      const res = await fetch('/api/monks');
+      const res = await fetch(`${API_BASE}/api/monks`);
       const data = await res.json();
       if (data.success) {
         setMonks(data.monks);
@@ -39,7 +40,7 @@ export default function App() {
   useEffect(() => {
     fetchMonks();
 
-    // Telegram Mini App Auto-Auth Integration (if opened inside Telegram)
+    // Telegram Mini App Auto-Auth Integration
     if (window.Telegram?.WebApp) {
       const tg = window.Telegram.WebApp;
       tg.ready();
@@ -47,13 +48,12 @@ export default function App() {
 
       const tgUser = tg.initDataUnsafe?.user;
       if (tgUser) {
-        fetch(`/api/monks/by-telegram/${tgUser.id}`)
+        fetch(`${API_BASE}/api/monks/by-telegram/${tgUser.id}`)
           .then(res => res.json())
           .then(data => {
             if (data.success && data.monk) {
               setCurrentMonk(data.monk);
             } else {
-              // Automatically open registration modal if user is not registered yet
               setIsRegisterOpen(true);
             }
           })
@@ -78,7 +78,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 font-khmer selection:bg-amber-500 selection:text-slate-950">
-      {/* Header & User Switcher */}
       <Navbar
         monks={monks}
         currentMonk={currentMonk}
@@ -91,10 +90,7 @@ export default function App() {
         }}
       />
 
-      {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-24 md:pb-8">
-        
-        {/* Navigation Tabs Bar */}
         <div className="glass-panel p-1.5 rounded-2xl flex items-center gap-1.5 overflow-x-auto text-xs scrollbar-none border border-slate-800">
           <button
             onClick={() => setActiveTab('monk')}
@@ -157,7 +153,6 @@ export default function App() {
           </button>
         </div>
 
-        {/* Empty Database State Notice */}
         {monks.length === 0 && activeTab !== 'bot' && (
           <div className="glass-panel p-8 rounded-3xl text-center space-y-4 border border-amber-500/30 max-w-2xl mx-auto my-8">
             <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-3xl mx-auto">
@@ -178,7 +173,6 @@ export default function App() {
           </div>
         )}
 
-        {/* Tab Content Rendering */}
         {monks.length > 0 && activeTab === 'monk' && (
           <MonkView
             currentMonk={currentMonk}
@@ -216,7 +210,6 @@ export default function App() {
         )}
       </main>
 
-      {/* Registration Modal */}
       <RegisterModal
         isOpen={isRegisterOpen}
         onClose={() => setIsRegisterOpen(false)}
@@ -226,7 +219,6 @@ export default function App() {
         }}
       />
 
-      {/* Footer */}
       <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-xs text-slate-500">
         <p>ប្រព័ន្ធគ្រប់គ្រងវត្តមានព្រះសង្ឃឡើងនមស្សការ វត្តឈូកវ៉ា © {new Date().getFullYear()} • គាំទ្រការប្រើប្រាស់ Telegram Mini App</p>
       </footer>

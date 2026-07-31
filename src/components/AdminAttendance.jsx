@@ -1,24 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, XCircle, Clock, Save, Calendar, Users, AlertCircle, Sparkles } from 'lucide-react';
+import { API_BASE } from '../config';
 
 export default function AdminAttendance({ monks, currentAdmin }) {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [session, setSession] = useState('morning'); // 'morning' | 'evening'
-  const [attendanceState, setAttendanceState] = useState({}); // { monk_id: 'present' | 'absent' | 'permission' }
+  const [session, setSession] = useState('morning');
+  const [attendanceState, setAttendanceState] = useState({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
 
-  // Fetch existing attendance records for the selected date & session
   const fetchAttendance = async () => {
     setLoading(true);
     setMessage(null);
     try {
-      const res = await fetch(`/api/attendance?date=${selectedDate}&session=${session}`);
+      const res = await fetch(`${API_BASE}/api/attendance?date=${selectedDate}&session=${session}`);
       const data = await res.json();
       
       const state = {};
-      // Default all monks to 'present' initially
       monks.forEach(m => {
         state[m.id] = 'present';
       });
@@ -67,7 +66,7 @@ export default function AdminAttendance({ monks, currentAdmin }) {
     }));
 
     try {
-      const res = await fetch('/api/attendance/batch', {
+      const res = await fetch(`${API_BASE}/api/attendance/batch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -91,15 +90,12 @@ export default function AdminAttendance({ monks, currentAdmin }) {
     }
   };
 
-  // Calculate totals for preview
   const totalPresent = Object.values(attendanceState).filter(s => s === 'present').length;
   const totalAbsent = Object.values(attendanceState).filter(s => s === 'absent').length;
-  const totalPermission = Object.values(attendanceState).filter(s => s === 'permission').length;
   const sessionFineTotal = totalAbsent * 2000;
 
   return (
     <div className="space-y-6">
-      {/* Header & Controls Panel */}
       <div className="glass-panel p-6 rounded-2xl space-y-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-4">
           <div>
@@ -110,7 +106,6 @@ export default function AdminAttendance({ monks, currentAdmin }) {
             <p className="text-xs text-slate-400">សម្រាប់ Admin វត្តឈូកវ៉ា ស្រង់វត្តមានពេលព្រឹក និង ពេលល្ងាច</p>
           </div>
 
-          {/* Quick Bulk Actions */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleSetAll('present')}
@@ -127,7 +122,6 @@ export default function AdminAttendance({ monks, currentAdmin }) {
           </div>
         </div>
 
-        {/* Date & Session Filters */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
           <div>
             <label className="block text-slate-300 mb-1 font-medium">ជ្រើសរើសកាលបរិច្ឆេទ</label>
@@ -167,7 +161,6 @@ export default function AdminAttendance({ monks, currentAdmin }) {
             </div>
           </div>
 
-          {/* Session Fine Overview Pill */}
           <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
             <div>
               <div className="text-slate-400 text-[11px]">ប្រាក់ពិន័យសម័យនេះ (២,០០០៛/អវត្តមាន)</div>
@@ -190,7 +183,6 @@ export default function AdminAttendance({ monks, currentAdmin }) {
         )}
       </div>
 
-      {/* Monks Attendance List Table */}
       <div className="glass-panel rounded-2xl overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-slate-400 font-khmer">
@@ -215,7 +207,6 @@ export default function AdminAttendance({ monks, currentAdmin }) {
                     </div>
                   </div>
 
-                  {/* Radio / Toggle Options for Present / Absent / Permission */}
                   <div className="grid grid-cols-3 gap-2 text-xs w-full sm:w-auto">
                     <button
                       type="button"
@@ -262,7 +253,6 @@ export default function AdminAttendance({ monks, currentAdmin }) {
           </div>
         )}
 
-        {/* Footer Save Button */}
         <div className="p-4 bg-slate-950/60 border-t border-slate-800 flex justify-end">
           <button
             onClick={handleSaveAttendance}

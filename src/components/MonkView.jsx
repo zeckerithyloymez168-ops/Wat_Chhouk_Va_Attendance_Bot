@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, AlertTriangle, CheckCircle2, Clock, FileText, Send, DollarSign, XCircle } from 'lucide-react';
+import { API_BASE } from '../config';
 
 export default function MonkView({ currentMonk, onLeaveSubmitted }) {
   const [summary, setSummary] = useState(null);
@@ -17,7 +18,7 @@ export default function MonkView({ currentMonk, onLeaveSubmitted }) {
     if (!currentMonk) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/monks/${currentMonk.id}/summary`);
+      const res = await fetch(`${API_BASE}/api/monks/${currentMonk.id}/summary`);
       const data = await res.json();
       if (data.success) {
         setSummary(data);
@@ -44,7 +45,7 @@ export default function MonkView({ currentMonk, onLeaveSubmitted }) {
     setFormMsg(null);
 
     try {
-      const res = await fetch('/api/leave', {
+      const res = await fetch(`${API_BASE}/api/leave`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

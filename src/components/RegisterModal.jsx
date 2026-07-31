@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { UserPlus, X, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
+import { API_BASE } from '../config';
 
 export default function RegisterModal({ isOpen, onClose, onMonkRegistered }) {
   const [telegramId, setTelegramId] = useState('');
@@ -31,7 +32,7 @@ export default function RegisterModal({ isOpen, onClose, onMonkRegistered }) {
     setMsg(null);
 
     try {
-      const res = await fetch('/api/monks/register', {
+      const res = await fetch(`${API_BASE}/api/monks/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -53,6 +54,7 @@ export default function RegisterModal({ isOpen, onClose, onMonkRegistered }) {
         setMsg({ type: 'error', text: data.message || 'មានបញ្ហាក្នុងការចុះឈ្មោះ' });
       }
     } catch (err) {
+      console.error("Registration fetch error:", err);
       setMsg({ type: 'error', text: 'មិនអាចភ្ជាប់ទៅកាន់ Server' });
     } finally {
       setLoading(false);

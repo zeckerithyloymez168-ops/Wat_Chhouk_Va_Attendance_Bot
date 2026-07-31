@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, XCircle, Clock, FileText, Check, X, Filter } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, FileText, Check, X } from 'lucide-react';
+import { API_BASE } from '../config';
 
 export default function AdminLeaveApproval({ monks, currentAdmin, onActionDone }) {
   const [requests, setRequests] = useState([]);
@@ -10,7 +11,7 @@ export default function AdminLeaveApproval({ monks, currentAdmin, onActionDone }
   const fetchRequests = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/leave');
+      const res = await fetch(`${API_BASE}/api/leave`);
       const data = await res.json();
       if (data.success) {
         setRequests(data.leaveRequests);
@@ -29,7 +30,7 @@ export default function AdminLeaveApproval({ monks, currentAdmin, onActionDone }
   const handleUpdateStatus = async (id, status) => {
     setProcessingId(id);
     try {
-      const res = await fetch(`/api/leave/${id}/status`, {
+      const res = await fetch(`${API_BASE}/api/leave/${id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -56,7 +57,6 @@ export default function AdminLeaveApproval({ monks, currentAdmin, onActionDone }
 
   return (
     <div className="space-y-6">
-      {/* Header & Filter */}
       <div className="glass-panel p-6 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
@@ -66,7 +66,6 @@ export default function AdminLeaveApproval({ monks, currentAdmin, onActionDone }
           <p className="text-xs text-slate-400">ពិនិត្យ និងអនុម័តពាក្យសុំច្បាប់របស់ព្រះសង្ឃ ដែលផ្ញើមកតាម Telegram</p>
         </div>
 
-        {/* Status Filter Buttons */}
         <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
           {[
             { id: 'all', label: 'ទាំងអស់' },
@@ -89,7 +88,6 @@ export default function AdminLeaveApproval({ monks, currentAdmin, onActionDone }
         </div>
       </div>
 
-      {/* Requests List */}
       <div className="glass-panel rounded-2xl p-6">
         {loading ? (
           <div className="py-12 text-center text-slate-400 font-khmer">

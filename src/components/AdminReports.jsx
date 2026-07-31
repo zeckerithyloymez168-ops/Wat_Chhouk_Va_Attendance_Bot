@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Award, CheckCircle2, AlertTriangle, Search, Check, RefreshCw } from 'lucide-react';
+import { DollarSign, Search, Check, RefreshCw } from 'lucide-react';
+import { API_BASE } from '../config';
 
 export default function AdminReports({ monks, onRefreshNeeded }) {
   const [summaries, setSummaries] = useState([]);
@@ -12,7 +13,7 @@ export default function AdminReports({ monks, onRefreshNeeded }) {
     try {
       const results = await Promise.all(
         monks.map(async (monk) => {
-          const res = await fetch(`/api/monks/${monk.id}/summary`);
+          const res = await fetch(`${API_BASE}/api/monks/${monk.id}/summary`);
           const data = await res.json();
           return data.success ? data : null;
         })
@@ -28,13 +29,15 @@ export default function AdminReports({ monks, onRefreshNeeded }) {
   useEffect(() => {
     if (monks.length > 0) {
       fetchAllSummaries();
+    } else {
+      setLoading(false);
     }
   }, [monks]);
 
   const handleMarkPaid = async (attendanceId) => {
     setProcessingId(attendanceId);
     try {
-      const res = await fetch(`/api/attendance/${attendanceId}/paid`, {
+      const res = await fetch(`${API_BASE}/api/attendance/${attendanceId}/paid`, {
         method: 'PATCH'
       });
       const data = await res.json();
@@ -49,7 +52,6 @@ export default function AdminReports({ monks, onRefreshNeeded }) {
     }
   };
 
-  // Aggregated Fines & Stats
   const grandTotalFines = summaries.reduce((acc, curr) => acc + (curr.stats?.totalFine || 0), 0);
   const grandUnpaidFines = summaries.reduce((acc, curr) => acc + (curr.stats?.unpaidFine || 0), 0);
   const grandPaidFines = grandTotalFines - grandUnpaidFines;
@@ -60,7 +62,6 @@ export default function AdminReports({ monks, onRefreshNeeded }) {
 
   return (
     <div className="space-y-6">
-      {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="glass-panel p-5 rounded-2xl border border-rose-500/20 bg-rose-500/5">
           <div className="text-xs text-rose-300 font-medium mb-1">ប្រាក់ពិន័យនៅខ្វះ (Unpaid Fines)</div>
@@ -81,7 +82,6 @@ export default function AdminReports({ monks, onRefreshNeeded }) {
         </div>
       </div>
 
-      {/* Main Table Panel */}
       <div className="glass-panel rounded-2xl p-6 space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
@@ -115,6 +115,10 @@ export default function AdminReports({ monks, onRefreshNeeded }) {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-3"></div>
             កំពុងគណនារបាយការណ៍...
           </div>
+        ) : filteredSummaries.length === 0 ? (
+          <div className="py-12 text-center text-slate-500 text-sm font-khmer">
+            មិនមានទិន្នន័យព្រះសង្ឃត្រូវបង្ហាញឡើយ
+          </div>
         ) : (
           <div className="divide-y divide-slate-800 border border-slate-800 rounded-xl overflow-hidden">
             {filteredSummaries.map((item) => {
@@ -147,7 +151,6 @@ export default function AdminReports({ monks, onRefreshNeeded }) {
                     </div>
                   </div>
 
-                  {/* List of unpaid sessions for this monk */}
                   {unpaidAttendances.length > 0 && (
                     <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800 space-y-2">
                       <div className="text-[11px] text-rose-300 font-medium">កំណត់ត្រាអវត្តមានមិនទាន់បង់ប្រាក់៖</div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, Sparkles, RefreshCw, Terminal, ExternalLink } from 'lucide-react';
+import { Send, Bot, RefreshCw, Terminal, ExternalLink } from 'lucide-react';
+import { API_BASE } from '../config';
 
 export default function TelegramSimulator({ currentMonk, onSwitchTab }) {
   const [messages, setMessages] = useState([
@@ -19,7 +20,7 @@ export default function TelegramSimulator({ currentMonk, onSwitchTab }) {
 
   const fetchBotLogs = async () => {
     try {
-      const res = await fetch('/api/bot-logs');
+      const res = await fetch(`${API_BASE}/api/bot-logs`);
       const data = await res.json();
       if (data.success) {
         setBotLogs(data.logs);
@@ -43,12 +44,10 @@ export default function TelegramSimulator({ currentMonk, onSwitchTab }) {
     const textToSend = cmdText || input;
     if (!textToSend.trim()) return;
 
-    // Add user message
     const userMsg = { sender: 'user', text: textToSend };
     setMessages(prev => [...prev, userMsg]);
     if (!cmdText) setInput('');
 
-    // Process Bot response simulation
     setTimeout(async () => {
       const text = textToSend.toLowerCase();
       let botReply = { sender: 'bot', text: '' };
@@ -61,16 +60,19 @@ export default function TelegramSimulator({ currentMonk, onSwitchTab }) {
           { label: '📝 សុំច្បាប់', action: 'leave' }
         ];
       } else if (text.includes('/attendance') || text.includes('វត្តមាន') || text.includes('my_attendance')) {
-        // Fetch current monk summary
-        const res = await fetch(`/api/monks/${currentMonk?.id || 3}/summary`);
-        const data = await res.json();
-        const stats = data.stats || { totalPresent: 0, totalAbsent: 0, unpaidFine: 0 };
-        
-        botReply.text = `📊 **របាយការណ៍វត្តមាន៖ ${currentMonk?.name}**\n\n` +
-          `✅ វត្តមាន៖ ${stats.totalPresent} លើក\n` +
-          `❌ អវត្តមាន៖ ${stats.totalAbsent} លើក\n` +
-          `💰 ប្រាក់ពិន័យត្រូវបង់៖ ${stats.unpaidFine.toLocaleString()} ៛\n\n` +
-          `*(អវត្តមាន ១ លើក ពិន័យ ២,០០០៛)*`;
+        if (currentMonk) {
+          const res = await fetch(`${API_BASE}/api/monks/${currentMonk.id}/summary`);
+          const data = await res.json();
+          const stats = data.stats || { totalPresent: 0, totalAbsent: 0, unpaidFine: 0 };
+          
+          botReply.text = `📊 **របាយការណ៍វត្តមាន៖ ${currentMonk.name}**\n\n` +
+            `✅ វត្តមាន៖ ${stats.totalPresent} លើក\n` +
+            `❌ អវត្តមាន៖ ${stats.totalAbsent} លើក\n` +
+            `💰 ប្រាក់ពិន័យត្រូវបង់៖ ${stats.unpaidFine.toLocaleString()} ៛\n\n` +
+            `*(អវត្តមាន ១ លើក ពិន័យ ២,០០០៛)*`;
+        } else {
+          botReply.text = `មិនទាន់មានគណនីព្រះសង្ឃត្រូវបានជ្រើសរើសនៅឡើយទេ`;
+        }
         botReply.buttons = [
           { label: '📱 មើលលម្អិតក្នុង Mini App', action: 'miniapp' }
         ];
@@ -107,7 +109,6 @@ export default function TelegramSimulator({ currentMonk, onSwitchTab }) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Telegram Mobile Phone UI Simulator */}
       <div className="lg:col-span-2 glass-panel rounded-3xl p-4 md:p-6 space-y-4 border border-slate-700/80">
         <div className="flex justify-between items-center bg-slate-900/90 px-4 py-3 rounded-2xl border border-slate-800">
           <div className="flex items-center space-x-3">
@@ -131,7 +132,6 @@ export default function TelegramSimulator({ currentMonk, onSwitchTab }) {
           </button>
         </div>
 
-        {/* Chat Stream Window */}
         <div className="h-[420px] overflow-y-auto space-y-3 p-3 bg-slate-950/80 rounded-2xl border border-slate-800/80 font-khmer">
           {messages.map((msg, idx) => (
             <div
@@ -145,7 +145,6 @@ export default function TelegramSimulator({ currentMonk, onSwitchTab }) {
               }`}>
                 {msg.text}
 
-                {/* Inline Action Buttons */}
                 {msg.buttons && (
                   <div className="mt-3 pt-2 border-t border-slate-800/80 space-y-1.5">
                     {msg.buttons.map((btn, bIdx) => (
@@ -166,7 +165,6 @@ export default function TelegramSimulator({ currentMonk, onSwitchTab }) {
           <div ref={chatEndRef} />
         </div>
 
-        {/* Input Bar */}
         <div className="flex items-center gap-2">
           <input
             type="text"
@@ -185,7 +183,6 @@ export default function TelegramSimulator({ currentMonk, onSwitchTab }) {
         </div>
       </div>
 
-      {/* Backend Live Telegram Webhook & Event Log Monitor */}
       <div className="glass-panel rounded-3xl p-5 space-y-4 flex flex-col justify-between border border-slate-800">
         <div>
           <div className="flex items-center space-x-2 text-xs font-bold text-amber-400 border-b border-slate-800 pb-3">
