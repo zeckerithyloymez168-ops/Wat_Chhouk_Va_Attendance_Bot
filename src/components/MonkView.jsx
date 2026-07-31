@@ -40,10 +40,6 @@ export default function MonkView({ currentMonk, onLeaveSubmitted }) {
       return;
     }
     fetchSummary(false);
-    const interval = setInterval(() => {
-      fetchSummary(true);
-    }, 3000);
-    return () => clearInterval(interval);
   }, [currentMonk?.id]);
 
   const handleSubmitLeave = async (e) => {

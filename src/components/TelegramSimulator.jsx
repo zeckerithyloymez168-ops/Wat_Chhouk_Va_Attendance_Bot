@@ -32,8 +32,6 @@ export default function TelegramSimulator({ currentMonk, onSwitchTab }) {
 
   useEffect(() => {
     fetchBotLogs();
-    const interval = setInterval(fetchBotLogs, 3000);
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {

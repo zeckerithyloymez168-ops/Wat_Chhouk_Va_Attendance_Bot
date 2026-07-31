@@ -56,9 +56,35 @@
       "timestamp": "2026-07-31T17:35:03.017Z",
       "type": "monk_registered",
       "message": "ព្រះសង្ឃអង្គថ្មីបានចុះឈ្មោះ៖ fhhhh (Telegram ID: 100888666, តួនាទី: monk)"
+    },
+    {
+      "timestamp": "2026-07-31T18:11:23.721Z",
+      "type": "broadcast_sent",
+      "message": "បានផ្ញើសារជូនដំណឹងទៅព្រះសង្ឃ 2 អង្គ៖ \"🔔 រំលឹកឡើងនមស្សការពេលព្រឹក\""
+    },
+    {
+      "timestamp": "2026-07-31T18:11:30.615Z",
+      "type": "broadcast_sent",
+      "message": "បានផ្ញើសារជូនដំណឹងទៅព្រះសង្ឃ 2 អង្គ៖ \"ងង\""
     }
   ],
   "audit_logs": [
+    {
+      "id": 7,
+      "actor_name": "Admin",
+      "action_type": "BROADCAST_SENT",
+      "description": "បានផ្ញើសារជូនដំណឹង (Broadcast): \"ងង\"",
+      "target": "2 Telegram users",
+      "timestamp": "2026-07-31T18:11:30.616Z"
+    },
+    {
+      "id": 6,
+      "actor_name": "Admin",
+      "action_type": "BROADCAST_SENT",
+      "description": "បានផ្ញើសារជូនដំណឹង (Broadcast): \"🔔 រំលឹកឡើងនមស្សការពេលព្រឹក\"",
+      "target": "2 Telegram users",
+      "timestamp": "2026-07-31T18:11:23.723Z"
+    },
     {
       "id": 5,
       "actor_name": "Admin",

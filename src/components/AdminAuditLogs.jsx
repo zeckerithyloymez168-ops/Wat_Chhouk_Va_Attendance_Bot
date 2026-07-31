@@ -25,10 +25,6 @@ export default function AdminAuditLogs() {
 
   useEffect(() => {
     fetchLogs(false);
-    const interval = setInterval(() => {
-      fetchLogs(true);
-    }, 3000);
-    return () => clearInterval(interval);
   }, []);
 
   const filteredLogs = logs.filter(log => {

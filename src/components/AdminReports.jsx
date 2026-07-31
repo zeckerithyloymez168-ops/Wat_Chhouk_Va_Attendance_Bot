@@ -38,10 +38,6 @@ export default function AdminReports({ monks, onRefreshNeeded }) {
   useEffect(() => {
     if (monks.length > 0) {
       fetchAllSummaries(false);
-      const interval = setInterval(() => {
-        fetchAllSummaries(true);
-      }, 4000);
-      return () => clearInterval(interval);
     } else {
       setLoading(false);
     }

@@ -19,10 +19,6 @@ export default function Navbar({ monks, currentMonk, setCurrentMonk, onMonkRegis
                 <h1 className="text-lg font-bold gold-gradient-text tracking-wide flex items-center gap-2">
                   {t?.appTitle || "វត្តឈូកវ៉ា"} 
                   <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">គ្រប់គ្រងវត្តមាន</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 font-mono">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block"></span>
-                    Live Sync
-                  </span>
                 </h1>
                 <p className="text-xs text-slate-400">{t?.appSubtitle || "ប្រព័ន្ធកត់ត្រាវត្តមានព្រះសង្ឃ ឡើងនមស្សការ & Telegram Bot"}</p>
               </div>

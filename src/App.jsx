@@ -37,9 +37,11 @@ export default function App() {
       if (data.success) {
         setMonks(data.monks);
         if (data.monks.length > 0) {
-          if (!currentMonk || !data.monks.find(m => m.id === currentMonk.id)) {
-            setCurrentMonk(data.monks[0]);
-          }
+          setCurrentMonk(prevCurrent => {
+            if (!prevCurrent) return data.monks[0];
+            const match = data.monks.find(m => m.id === prevCurrent.id);
+            return match || data.monks[0];
+          });
         } else {
           setCurrentMonk(null);
         }
@@ -54,11 +56,6 @@ export default function App() {
   useEffect(() => {
     fetchMonks(false);
 
-    // Real-Time live background sync interval (every 3 seconds)
-    const syncInterval = setInterval(() => {
-      fetchMonks(true);
-    }, 3000);
-
     // Telegram Mini App Auto-Auth Integration
     if (window.Telegram?.WebApp) {
       const tg = window.Telegram.WebApp;
@@ -72,6 +69,9 @@ export default function App() {
           .then(data => {
             if (data.success && data.monk) {
               setCurrentMonk(data.monk);
+              if (data.monk.role !== 'admin') {
+                setActiveTab('monk');
+              }
             } else {
               setIsRegisterOpen(true);
             }
@@ -79,9 +79,16 @@ export default function App() {
           .catch(e => console.warn("Auto auth check error:", e));
       }
     }
-
-    return () => clearInterval(syncInterval);
   }, []);
+
+  const handleSelectMonk = (monk) => {
+    setCurrentMonk(monk);
+    if (monk && monk.role !== 'admin') {
+      if (['attendance', 'leave', 'reports', 'users', 'audit', 'holidays'].includes(activeTab)) {
+        setActiveTab('monk');
+      }
+    }
+  };
 
   if (loading) {
     return (
@@ -104,12 +111,12 @@ export default function App() {
       <Navbar
         monks={monks}
         currentMonk={currentMonk}
-        setCurrentMonk={setCurrentMonk}
+        setCurrentMonk={handleSelectMonk}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onMonkRegistered={(newMonk) => {
           fetchMonks();
-          if (newMonk) setCurrentMonk(newMonk);
+          if (newMonk) handleSelectMonk(newMonk);
         }}
         lang={lang}
         setLang={setLang}
@@ -319,7 +326,7 @@ export default function App() {
         onClose={() => setIsRegisterOpen(false)}
         onMonkRegistered={(newMonk) => {
           fetchMonks();
-          if (newMonk) setCurrentMonk(newMonk);
+          if (newMonk) handleSelectMonk(newMonk);
         }}
       />
 

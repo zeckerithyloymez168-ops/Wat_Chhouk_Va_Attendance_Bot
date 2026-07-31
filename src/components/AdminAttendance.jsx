@@ -38,10 +38,6 @@ export default function AdminAttendance({ monks, currentAdmin }) {
   useEffect(() => {
     if (monks.length > 0) {
       fetchAttendance(false);
-      const interval = setInterval(() => {
-        fetchAttendance(true);
-      }, 3000);
-      return () => clearInterval(interval);
     }
   }, [selectedDate, session, monks]);
 
