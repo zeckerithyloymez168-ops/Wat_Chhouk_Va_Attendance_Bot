@@ -1,6 +1,104 @@
 {
-  "monks": [],
+  "monks": [
+    {
+      "id": 1,
+      "telegram_id": 1088888,
+      "name": "ggg",
+      "role": "admin",
+      "phone": "0988888888",
+      "status": "active",
+      "created_at": "2026-07-31T17:21:14.510Z"
+    },
+    {
+      "id": 2,
+      "telegram_id": 100888666,
+      "name": "fhhhh",
+      "role": "monk",
+      "phone": "09899997",
+      "status": "active",
+      "created_at": "2026-07-31T17:35:03.016Z"
+    }
+  ],
   "attendances": [],
   "leave_requests": [],
-  "bot_logs": []
+  "bot_logs": [
+    {
+      "timestamp": "2026-07-31T17:21:14.510Z",
+      "type": "monk_registered",
+      "message": "ព្រះសង្ឃអង្គថ្មីបានចុះឈ្មោះ៖ ggg (Telegram ID: 1088888, តួនាទី: admin)"
+    },
+    {
+      "timestamp": "2026-07-31T17:21:55.781Z",
+      "type": "broadcast_sent",
+      "message": "បានផ្ញើសារជូនដំណឹងទៅព្រះសង្ឃ 1 អង្គ៖ \"🔔 រំលឹកឡើងនមស្សការពេលព្រឹក\""
+    },
+    {
+      "timestamp": "2026-07-31T17:22:09.639Z",
+      "type": "broadcast_sent",
+      "message": "បានផ្ញើសារជូនដំណឹងទៅព្រះសង្ឃ 1 អង្គ៖ \"ងើប\""
+    },
+    {
+      "timestamp": "2026-07-31T17:22:33.616Z",
+      "type": "broadcast_sent",
+      "message": "បានផ្ញើសារជូនដំណឹងទៅព្រះសង្ឃ 1 អង្គ៖ \"🔔 រំលឹកឡើងនមស្សការពេលល្ងាច\""
+    },
+    {
+      "timestamp": "2026-07-31T17:22:34.838Z",
+      "type": "broadcast_sent",
+      "message": "បានផ្ញើសារជូនដំណឹងទៅព្រះសង្ឃ 1 អង្គ៖ \"🔔 រំលឹកឡើងនមស្សការពេលព្រឹក\""
+    },
+    {
+      "timestamp": "2026-07-31T17:22:35.460Z",
+      "type": "broadcast_sent",
+      "message": "បានផ្ញើសារជូនដំណឹងទៅព្រះសង្ឃ 1 អង្គ៖ \"🔔 រំលឹកឡើងនមស្សការពេលល្ងាច\""
+    },
+    {
+      "timestamp": "2026-07-31T17:35:03.017Z",
+      "type": "monk_registered",
+      "message": "ព្រះសង្ឃអង្គថ្មីបានចុះឈ្មោះ៖ fhhhh (Telegram ID: 100888666, តួនាទី: monk)"
+    }
+  ],
+  "audit_logs": [
+    {
+      "id": 5,
+      "actor_name": "Admin",
+      "action_type": "BROADCAST_SENT",
+      "description": "បានផ្ញើសារជូនដំណឹង (Broadcast): \"🔔 រំលឹកឡើងនមស្សការពេលល្ងាច\"",
+      "target": "1 Telegram users",
+      "timestamp": "2026-07-31T17:22:35.461Z"
+    },
+    {
+      "id": 4,
+      "actor_name": "Admin",
+      "action_type": "BROADCAST_SENT",
+      "description": "បានផ្ញើសារជូនដំណឹង (Broadcast): \"🔔 រំលឹកឡើងនមស្សការពេលព្រឹក\"",
+      "target": "1 Telegram users",
+      "timestamp": "2026-07-31T17:22:34.838Z"
+    },
+    {
+      "id": 3,
+      "actor_name": "Admin",
+      "action_type": "BROADCAST_SENT",
+      "description": "បានផ្ញើសារជូនដំណឹង (Broadcast): \"🔔 រំលឹកឡើងនមស្សការពេលល្ងាច\"",
+      "target": "1 Telegram users",
+      "timestamp": "2026-07-31T17:22:33.617Z"
+    },
+    {
+      "id": 2,
+      "actor_name": "Admin",
+      "action_type": "BROADCAST_SENT",
+      "description": "បានផ្ញើសារជូនដំណឹង (Broadcast): \"ងើប\"",
+      "target": "1 Telegram users",
+      "timestamp": "2026-07-31T17:22:09.640Z"
+    },
+    {
+      "id": 1,
+      "actor_name": "Admin",
+      "action_type": "BROADCAST_SENT",
+      "description": "បានផ្ញើសារជូនដំណឹង (Broadcast): \"🔔 រំលឹកឡើងនមស្សការពេលព្រឹក\"",
+      "target": "1 Telegram users",
+      "timestamp": "2026-07-31T17:21:55.782Z"
+    }
+  ],
+  "holidays": []
 }

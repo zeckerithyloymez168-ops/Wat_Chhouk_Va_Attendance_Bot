@@ -25,6 +25,10 @@ export default function AdminLeaveApproval({ monks, currentAdmin, onActionDone }
 
   useEffect(() => {
     fetchRequests();
+    const interval = setInterval(() => {
+      fetchRequests();
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleUpdateStatus = async (id, status) => {

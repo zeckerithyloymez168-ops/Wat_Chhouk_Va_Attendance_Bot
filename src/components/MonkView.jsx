@@ -32,6 +32,10 @@ export default function MonkView({ currentMonk, onLeaveSubmitted }) {
 
   useEffect(() => {
     fetchSummary();
+    const interval = setInterval(() => {
+      fetchSummary();
+    }, 3000);
+    return () => clearInterval(interval);
   }, [currentMonk]);
 
   const handleSubmitLeave = async (e) => {

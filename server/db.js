@@ -30,7 +30,9 @@ const cleanInitialData = {
   monks: [],
   attendances: [],
   leave_requests: [],
-  bot_logs: []
+  bot_logs: [],
+  audit_logs: [],
+  holidays: []
 };
 
 class ProductionDB {
@@ -51,6 +53,8 @@ class ProductionDB {
         if (!Array.isArray(this.data.attendances)) this.data.attendances = [];
         if (!Array.isArray(this.data.leave_requests)) this.data.leave_requests = [];
         if (!Array.isArray(this.data.bot_logs)) this.data.bot_logs = [];
+        if (!Array.isArray(this.data.audit_logs)) this.data.audit_logs = [];
+        if (!Array.isArray(this.data.holidays)) this.data.holidays = [];
       } else {
         this.save();
       }
@@ -192,6 +196,21 @@ class ProductionDB {
     return null;
   }
 
+  deleteMonk(id) {
+    const index = this.data.monks.findIndex(m => m.id === Number(id));
+    if (index !== -1) {
+      const removed = this.data.monks.splice(index, 1)[0];
+      this.save();
+
+      if (supabase) {
+        supabase.from('monks').delete().eq('id', id).then(() => {}).catch(e => console.warn(e));
+      }
+
+      return removed;
+    }
+    return null;
+  }
+
   // Attendances API
   getAttendances(filters = {}) {
     let result = [...this.data.attendances];
@@ -306,6 +325,13 @@ class ProductionDB {
       supabase.from('attendances').upsert(upsertList).then(() => {}).catch(e => console.warn(e));
     }
 
+    this.logAuditAction({
+      actor_name: 'Admin',
+      action_type: 'ATTENDANCE_RECORDED',
+      description: `បានស្រង់វត្តមានប្រចាំថ្ងៃ (${date} - ពេល${session === 'morning' ? 'ព្រឹក' : 'ល្ងាច'}) សម្រាប់ ${records.length} អង្គ`,
+      target: `${date} - ${session}`
+    });
+
     return this.getAttendances({ date, session });
   }
 
@@ -318,6 +344,14 @@ class ProductionDB {
       if (supabase) {
         supabase.from('attendances').update({ is_paid: true }).eq('id', attendanceId).then(() => {}).catch(e => console.warn(e));
       }
+
+      const monk = this.getMonkById(record.monk_id);
+      this.logAuditAction({
+        actor_name: 'Admin',
+        action_type: 'FINE_PAID',
+        description: `បានទទួលការបង់ប្រាក់ពិន័យ (២,០០០៛) ពី ${monk ? monk.name : 'ព្រះសង្ឃ'}`,
+        target: monk ? monk.name : `Monk #${record.monk_id}`
+      });
 
       return record;
     }
@@ -360,6 +394,14 @@ class ProductionDB {
       supabase.from('leave_requests').insert([newRequest]).then(() => {}).catch(e => console.warn(e));
     }
 
+    const monk = this.getMonkById(monk_id);
+    this.logAuditAction({
+      actor_name: monk ? monk.name : 'Monk',
+      action_type: 'LEAVE_SUBMITTED',
+      description: `បានផ្ញើសារសុំច្បាប់ (${start_date} ដល់ ${end_date}): "${reason}"`,
+      target: monk ? monk.name : `Monk #${monk_id}`
+    });
+
     return newRequest;
   }
 
@@ -401,6 +443,14 @@ class ProductionDB {
         });
       }
       this.save();
+
+      const monk = this.getMonkById(req.monk_id);
+      this.logAuditAction({
+        actor_name: 'Admin',
+        action_type: status === 'approved' ? 'LEAVE_APPROVED' : 'LEAVE_REJECTED',
+        description: `បាន ${status === 'approved' ? 'អនុម័ត' : 'បដិសេធ'} ការសុំច្បាប់របស់ ${monk ? monk.name : 'ព្រះសង្ឃ'}`,
+        target: monk ? monk.name : `Leave #${id}`
+      });
 
       if (supabase) {
         supabase.from('leave_requests').update({ status, approved_by }).eq('id', id).then(() => {}).catch(e => console.warn(e));
@@ -450,6 +500,121 @@ class ProductionDB {
 
   getBotLogs() {
     return this.data.bot_logs || [];
+  }
+
+  logAuditAction({ actor_name = 'Admin', action_type, description, target = '' }) {
+    if (!this.data.audit_logs) this.data.audit_logs = [];
+    const newLog = {
+      id: this.data.audit_logs.length > 0 ? Math.max(...this.data.audit_logs.map(l => l.id)) + 1 : 1,
+      actor_name,
+      action_type,
+      description,
+      target,
+      timestamp: new Date().toISOString()
+    };
+    this.data.audit_logs.unshift(newLog);
+    if (this.data.audit_logs.length > 200) this.data.audit_logs.pop();
+    this.save();
+    return newLog;
+  }
+
+  getAuditLogs() {
+    return this.data.audit_logs || [];
+  }
+
+  getMonthlyAnalytics() {
+    const monks = this.data.monks;
+    const attendances = this.data.attendances;
+    const totalAttendances = attendances.length;
+    const totalPresent = attendances.filter(a => a.status === 'present').length;
+    const totalAbsent = attendances.filter(a => a.status === 'absent').length;
+    const totalPermission = attendances.filter(a => a.status === 'permission').length;
+    const totalFines = totalAbsent * 2000;
+    const paidFines = attendances.filter(a => a.status === 'absent' && a.is_paid).length * 2000;
+    const unpaidFines = totalFines - paidFines;
+
+    const rate = totalAttendances > 0 ? Math.round((totalPresent / totalAttendances) * 100) : 100;
+
+    // Leaderboard
+    const monkStats = monks.map(m => {
+      const mAtt = attendances.filter(a => a.monk_id === m.id);
+      const mTotal = mAtt.length;
+      const mPresent = mAtt.filter(a => a.status === 'present').length;
+      const mRate = mTotal > 0 ? Math.round((mPresent / mTotal) * 100) : 100;
+      return {
+        id: m.id,
+        name: m.name,
+        role: m.role,
+        present: mPresent,
+        absent: mAtt.filter(a => a.status === 'absent').length,
+        permission: mAtt.filter(a => a.status === 'permission').length,
+        rate: mRate
+      };
+    }).sort((a, b) => b.rate - a.rate || b.present - a.present);
+
+    return {
+      overview: {
+        totalMonks: monks.length,
+        totalAttendances,
+        totalPresent,
+        totalAbsent,
+        totalPermission,
+        attendanceRate: rate,
+        totalFines,
+        paidFines,
+        unpaidFines
+      },
+      leaderboard: monkStats
+    };
+  }
+
+  // Sabbath & Holidays API
+  getHolidays() {
+    return this.data.holidays || [];
+  }
+
+  isHolidayDate(date) {
+    if (!this.data.holidays) return null;
+    return this.data.holidays.find(h => h.date === date) || null;
+  }
+
+  addHoliday({ date, title, is_sabbath = true }) {
+    if (!this.data.holidays) this.data.holidays = [];
+    const existingIndex = this.data.holidays.findIndex(h => h.date === date);
+    const newHoliday = {
+      id: existingIndex !== -1 ? this.data.holidays[existingIndex].id : (this.data.holidays.length > 0 ? Math.max(...this.data.holidays.map(h => h.id)) + 1 : 1),
+      date,
+      title,
+      is_sabbath,
+      created_at: new Date().toISOString()
+    };
+
+    if (existingIndex !== -1) {
+      this.data.holidays[existingIndex] = newHoliday;
+    } else {
+      this.data.holidays.push(newHoliday);
+    }
+    this.save();
+
+    this.logAuditAction({
+      actor_name: 'Admin',
+      action_type: 'HOLIDAY_ADDED',
+      description: `បានបន្ថែមថ្ងៃសីល/ថ្ងៃបុណ្យ (${date}): "${title}"`,
+      target: date
+    });
+
+    return newHoliday;
+  }
+
+  deleteHoliday(id) {
+    if (!this.data.holidays) return null;
+    const index = this.data.holidays.findIndex(h => h.id === Number(id));
+    if (index !== -1) {
+      const removed = this.data.holidays.splice(index, 1)[0];
+      this.save();
+      return removed;
+    }
+    return null;
   }
 }
 

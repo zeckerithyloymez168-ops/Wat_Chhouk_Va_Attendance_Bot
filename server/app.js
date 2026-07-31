@@ -5,7 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { db } from './db.js';
-import { notifyAdminLeaveRequest } from './bot.js';
+import { notifyAdminLeaveRequest, sendBroadcastMessage, sendPrayerSessionReminder } from './bot.js';
 
 dotenv.config();
 
@@ -62,6 +62,23 @@ app.post('/api/monks', (req, res) => {
   }
   const monk = db.addMonk({ name, role, phone, telegram_id });
   res.json({ success: true, monk });
+});
+
+app.patch('/api/monks/:id', (req, res) => {
+  const { name, role, phone, telegram_id, status } = req.body;
+  const updated = db.updateMonk(req.params.id, { name, role, phone, telegram_id, status });
+  if (!updated) {
+    return res.status(404).json({ success: false, message: 'Monk not found' });
+  }
+  res.json({ success: true, monk: updated });
+});
+
+app.delete('/api/monks/:id', (req, res) => {
+  const deleted = db.deleteMonk(req.params.id);
+  if (!deleted) {
+    return res.status(404).json({ success: false, message: 'Monk not found' });
+  }
+  res.json({ success: true, monk: deleted });
 });
 
 // 2. Attendance Routes
@@ -151,6 +168,54 @@ app.patch('/api/leave/:id/status', (req, res) => {
 // 4. Bot Simulation Logs API
 app.get('/api/bot-logs', (req, res) => {
   res.json({ success: true, logs: db.getBotLogs() });
+});
+
+// 5. Audit Logs API
+app.get('/api/audit-logs', (req, res) => {
+  res.json({ success: true, auditLogs: db.getAuditLogs() });
+});
+
+// 6. Monthly Analytics API
+app.get('/api/analytics/monthly', (req, res) => {
+  res.json({ success: true, analytics: db.getMonthlyAnalytics() });
+});
+
+// 7. Telegram Broadcast & Reminders API
+app.post('/api/broadcast', (req, res) => {
+  const { title, content } = req.body;
+  if (!title || !content) {
+    return res.status(400).json({ success: false, message: 'Title and content are required' });
+  }
+  const result = sendBroadcastMessage(title, content);
+  res.json({ success: true, message: 'Broadcast sent successfully', ...result });
+});
+
+app.post('/api/reminders/send', (req, res) => {
+  const { session } = req.body; // 'morning' or 'evening'
+  const result = sendPrayerSessionReminder(session || 'morning');
+  res.json({ success: true, message: 'Reminder sent successfully', ...result });
+});
+
+// 8. Holidays & Sabbath API
+app.get('/api/holidays', (req, res) => {
+  res.json({ success: true, holidays: db.getHolidays() });
+});
+
+app.post('/api/holidays', (req, res) => {
+  const { date, title, is_sabbath } = req.body;
+  if (!date || !title) {
+    return res.status(400).json({ success: false, message: 'Date and title are required' });
+  }
+  const holiday = db.addHoliday({ date, title, is_sabbath });
+  res.json({ success: true, holiday });
+});
+
+app.delete('/api/holidays/:id', (req, res) => {
+  const deleted = db.deleteHoliday(req.params.id);
+  if (!deleted) {
+    return res.status(404).json({ success: false, message: 'Holiday not found' });
+  }
+  res.json({ success: true, holiday: deleted });
 });
 
 export default app;

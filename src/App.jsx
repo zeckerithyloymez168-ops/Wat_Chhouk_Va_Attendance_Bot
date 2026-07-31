@@ -4,17 +4,31 @@ import MonkView from './components/MonkView';
 import AdminAttendance from './components/AdminAttendance';
 import AdminLeaveApproval from './components/AdminLeaveApproval';
 import AdminReports from './components/AdminReports';
+import AdminUsers from './components/AdminUsers';
+import AdminAuditLogs from './components/AdminAuditLogs';
+import AdminHolidays from './components/AdminHolidays';
+import AdminBroadcastModal from './components/AdminBroadcastModal';
 import TelegramSimulator from './components/TelegramSimulator';
 import RegisterModal from './components/RegisterModal';
-import { UserCheck, CalendarCheck, FileCheck, BarChart3, Bot, UserPlus } from 'lucide-react';
+import { UserCheck, CalendarCheck, FileCheck, BarChart3, Bot, UserPlus, Users, ShieldAlert, Lock, History, Send, Calendar } from 'lucide-react';
 import { API_BASE } from './config';
+import { translations } from './i18n';
 
 export default function App() {
   const [monks, setMonks] = useState([]);
   const [currentMonk, setCurrentMonk] = useState(null);
-  const [activeTab, setActiveTab] = useState('monk'); // 'monk' | 'attendance' | 'leave' | 'reports' | 'bot'
+  const [activeTab, setActiveTab] = useState('monk'); // 'monk' | 'attendance' | 'leave' | 'reports' | 'users' | 'audit' | 'holidays' | 'bot'
   const [loading, setLoading] = useState(true);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
+
+  // i18n & Theme state
+  const [lang, setLang] = useState('km');
+  const [theme, setTheme] = useState('dark');
+  const t = translations[lang] || translations.km;
+
+  const isAdmin = currentMonk?.role === 'admin';
+  const isAdminTab = ['attendance', 'leave', 'reports', 'users', 'audit', 'holidays'].includes(activeTab);
 
   const fetchMonks = async () => {
     try {
@@ -40,6 +54,11 @@ export default function App() {
   useEffect(() => {
     fetchMonks();
 
+    // Real-Time live background sync interval (every 3 seconds)
+    const syncInterval = setInterval(() => {
+      fetchMonks();
+    }, 3000);
+
     // Telegram Mini App Auto-Auth Integration
     if (window.Telegram?.WebApp) {
       const tg = window.Telegram.WebApp;
@@ -60,6 +79,8 @@ export default function App() {
           .catch(e => console.warn("Auto auth check error:", e));
       }
     }
+
+    return () => clearInterval(syncInterval);
   }, []);
 
   if (loading) {
@@ -77,7 +98,9 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 font-khmer selection:bg-amber-500 selection:text-slate-950">
+    <div className={`min-h-screen flex flex-col font-khmer selection:bg-amber-500 selection:text-slate-950 ${
+      theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-900 text-slate-100'
+    }`}>
       <Navbar
         monks={monks}
         currentMonk={currentMonk}
@@ -88,9 +111,15 @@ export default function App() {
           fetchMonks();
           if (newMonk) setCurrentMonk(newMonk);
         }}
+        lang={lang}
+        setLang={setLang}
+        t={t}
+        theme={theme}
+        setTheme={setTheme}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-24 md:pb-8">
+        {/* Navigation Tab Bar */}
         <div className="glass-panel p-1.5 rounded-2xl flex items-center gap-1.5 overflow-x-auto text-xs scrollbar-none border border-slate-800">
           <button
             onClick={() => setActiveTab('monk')}
@@ -101,31 +130,7 @@ export default function App() {
             }`}
           >
             <UserCheck className="w-4 h-4" />
-            <span>វត្តមានរបស់ខ្ញុំ</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('attendance')}
-            className={`px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 whitespace-nowrap transition-all ${
-              activeTab === 'attendance'
-                ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-            }`}
-          >
-            <CalendarCheck className="w-4 h-4" />
-            <span>ស្រង់វត្តមានប្រចាំថ្ងៃ (Admin)</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('leave')}
-            className={`px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 whitespace-nowrap transition-all ${
-              activeTab === 'leave'
-                ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-            }`}
-          >
-            <FileCheck className="w-4 h-4" />
-            <span>អនុម័តការសុំច្បាប់</span>
+            <span>{t.myAttendance}</span>
           </button>
 
           <button
@@ -137,8 +142,78 @@ export default function App() {
             }`}
           >
             <BarChart3 className="w-4 h-4" />
-            <span>របាយការណ៍ & ពិន័យ</span>
+            <span>{t.dashboard} {!isAdmin && <Lock className="w-3 h-3 text-rose-400 inline ml-1" />}</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 whitespace-nowrap transition-all ${
+              activeTab === 'users'
+                ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>{t.userList} {!isAdmin && <Lock className="w-3 h-3 text-rose-400 inline ml-1" />}</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('attendance')}
+            className={`px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 whitespace-nowrap transition-all ${
+              activeTab === 'attendance'
+                ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            }`}
+          >
+            <CalendarCheck className="w-4 h-4" />
+            <span>{t.dailyAttendance} {!isAdmin && <Lock className="w-3 h-3 text-rose-400 inline ml-1" />}</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('leave')}
+            className={`px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 whitespace-nowrap transition-all ${
+              activeTab === 'leave'
+                ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            }`}
+          >
+            <FileCheck className="w-4 h-4" />
+            <span>{t.leaveApproval} {!isAdmin && <Lock className="w-3 h-3 text-rose-400 inline ml-1" />}</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('holidays')}
+            className={`px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 whitespace-nowrap transition-all ${
+              activeTab === 'holidays'
+                ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            }`}
+          >
+            <Calendar className="w-4 h-4" />
+            <span>{t.holidays} {!isAdmin && <Lock className="w-3 h-3 text-rose-400 inline ml-1" />}</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('audit')}
+            className={`px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 whitespace-nowrap transition-all ${
+              activeTab === 'audit'
+                ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            }`}
+          >
+            <History className="w-4 h-4" />
+            <span>{t.auditLogs} {!isAdmin && <Lock className="w-3 h-3 text-rose-400 inline ml-1" />}</span>
+          </button>
+
+          {isAdmin && (
+            <button
+              onClick={() => setIsBroadcastOpen(true)}
+              className="px-3.5 py-2.5 rounded-xl font-bold flex items-center gap-1.5 whitespace-nowrap bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 transition-all ml-auto"
+            >
+              <Send className="w-4 h-4" />
+              <span>{t.broadcastBtn}</span>
+            </button>
+          )}
 
           <button
             onClick={() => setActiveTab('bot')}
@@ -149,10 +224,11 @@ export default function App() {
             }`}
           >
             <Bot className="w-4 h-4" />
-            <span>Telegram Bot Test</span>
+            <span>{t.telegramBot}</span>
           </button>
         </div>
 
+        {/* Empty state when no monks exist */}
         {monks.length === 0 && activeTab !== 'bot' && (
           <div className="glass-panel p-8 rounded-3xl text-center space-y-4 border border-amber-500/30 max-w-2xl mx-auto my-8">
             <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-3xl mx-auto">
@@ -173,6 +249,32 @@ export default function App() {
           </div>
         )}
 
+        {/* Access Denied View for Non-Admins attempting to access Admin Tabs */}
+        {!isAdmin && isAdminTab && (
+          <div className="glass-panel p-8 rounded-3xl border border-rose-500/30 bg-rose-500/5 max-w-2xl mx-auto text-center space-y-4 my-8">
+            <div className="w-16 h-16 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center text-3xl mx-auto">
+              <ShieldAlert className="w-8 h-8 text-rose-400" />
+            </div>
+            <h3 className="text-xl font-bold text-rose-400">{t.accessDenied}</h3>
+            <p className="text-sm text-slate-300 leading-relaxed font-khmer">
+              {t.accessDeniedDesc}
+            </p>
+            <p className="text-xs text-slate-400">
+              គណនីបច្ចុប្បន្ន ({currentMonk?.name || 'ព្រះសង្ឃ'}) មិនមែនជា Admin ឡើយ។ សូមប្តូរទៅប្រើប្រាស់គណនី Admin នៅជ្រុងខាងលើ ឬត្រឡប់ទៅកាន់ទំព័រវត្តមានរបស់អ្នក។
+            </p>
+            <div className="pt-2 flex items-center justify-center gap-3">
+              <button
+                onClick={() => setActiveTab('monk')}
+                className="gold-gradient-btn text-slate-950 font-bold py-2.5 px-5 rounded-xl text-xs shadow-lg inline-flex items-center gap-2"
+              >
+                <UserCheck className="w-4 h-4" />
+                <span>{t.backToMyAttendance}</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Monk Own View */}
         {monks.length > 0 && activeTab === 'monk' && (
           <MonkView
             currentMonk={currentMonk}
@@ -180,14 +282,15 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'attendance' && (
+        {/* Admin Tabs - Rendered only when isAdmin is true */}
+        {isAdmin && activeTab === 'attendance' && (
           <AdminAttendance
             monks={monks}
             currentAdmin={currentMonk}
           />
         )}
 
-        {activeTab === 'leave' && (
+        {isAdmin && activeTab === 'leave' && (
           <AdminLeaveApproval
             monks={monks}
             currentAdmin={currentMonk}
@@ -195,13 +298,34 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'reports' && (
+        {isAdmin && activeTab === 'reports' && (
           <AdminReports
             monks={monks}
             onRefreshNeeded={() => fetchMonks()}
           />
         )}
 
+        {isAdmin && activeTab === 'users' && (
+          <AdminUsers
+            monks={monks}
+            currentAdmin={currentMonk}
+            onRefreshNeeded={() => fetchMonks()}
+            onOpenRegister={() => setIsRegisterOpen(true)}
+          />
+        )}
+
+        {isAdmin && activeTab === 'holidays' && (
+          <AdminHolidays
+            lang={lang}
+            t={t}
+          />
+        )}
+
+        {isAdmin && activeTab === 'audit' && (
+          <AdminAuditLogs />
+        )}
+
+        {/* Telegram Bot Test Tab */}
         {activeTab === 'bot' && (
           <TelegramSimulator
             currentMonk={currentMonk}
@@ -217,6 +341,11 @@ export default function App() {
           fetchMonks();
           if (newMonk) setCurrentMonk(newMonk);
         }}
+      />
+
+      <AdminBroadcastModal
+        isOpen={isBroadcastOpen}
+        onClose={() => setIsBroadcastOpen(false)}
       />
 
       <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-xs text-slate-500">

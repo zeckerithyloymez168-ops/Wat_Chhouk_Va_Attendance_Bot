@@ -9,6 +9,10 @@ export const bot = BOT_TOKEN ? new Telegraf(BOT_TOKEN) : null;
 export const WEB_APP_URL = process.env.WEB_APP_URL || 'http://localhost:3000';
 
 if (bot) {
+  bot.catch((err, ctx) => {
+    console.warn(`Telegraf error handling update for ${ctx.updateType}:`, err.message || err);
+  });
+
   // Helper to construct full user name from Telegram profile
   const getTelegramFullName = (from) => {
     if (!from) return 'ព្រះសង្ឃ';
@@ -264,7 +268,7 @@ function handleAdminSheetSelect(ctx) {
     Markup.inlineKeyboard([
       [
         Markup.button.callback('🌅 ពេលព្រឹក', 'sheet_sess_morning'),
-        Markup.button.callback('<ctrl42> ពេលល្ងាច', 'sheet_sess_evening')
+        Markup.button.callback('🌆 ពេលល្ងាច', 'sheet_sess_evening')
       ]
     ])
   );
@@ -382,3 +386,79 @@ export function notifyAdminLeaveRequest(leaveRequest, monk) {
     }
   }
 }
+
+export function sendBroadcastMessage(title, content) {
+  const monks = db.getMonks();
+  const text = `📢 **${title}**\n\n${content}\n\n— វត្តឈូកវ៉ា (Wat Chhouk Va System)`;
+
+  db.logBotEvent({
+    type: 'broadcast_sent',
+    message: `បានផ្ញើសារជូនដំណឹងទៅព្រះសង្ឃ ${monks.length} អង្គ៖ "${title}"`
+  });
+
+  db.logAuditAction({
+    actor_name: 'Admin',
+    action_type: 'BROADCAST_SENT',
+    description: `បានផ្ញើសារជូនដំណឹង (Broadcast): "${title}"`,
+    target: `${monks.length} Telegram users`
+  });
+
+  if (!bot) return { sentCount: monks.length, simulated: true };
+
+  let sentCount = 0;
+  monks.forEach(m => {
+    if (m.telegram_id) {
+      try {
+        bot.telegram.sendMessage(m.telegram_id, text, {
+          parse_mode: 'Markdown',
+          ...Markup.inlineKeyboard([
+            [Markup.button.webApp('📱 បើក Mini App', WEB_APP_URL)]
+          ])
+        }).then(() => sentCount++).catch(e => console.warn(e.message));
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  });
+
+  return { sentCount: monks.length, simulated: false };
+}
+
+export function sendPrayerSessionReminder(session = 'morning') {
+  const isMorning = session === 'morning';
+  const title = isMorning ? '🔔 រំលឹកឡើងនមស្សការពេលព្រឹក' : '🔔 រំលឹកឡើងនមស្សការពេលល្ងាច';
+  const content = isMorning
+    ? 'សូមក្រាបថ្វាយបង្គំ/ជម្រាបសួរ ព្រះសង្ឃគ្រប់អង្គ! ដល់ម៉ោងឡើងនមស្សការពេលព្រឹកហើយ។ សូមនិមន្ត/អញ្ជើញចូលរួមសាលានមស្សការ។'
+    : 'សូមក្រាបថ្វាយបង្គំ/ជម្រាបសួរ ព្រះសង្ឃគ្រប់អង្គ! ដល់ម៉ោងឡើងនមស្សការពេលល្ងាចហើយ។ សូមនិមន្ត/អញ្ជើញចូលរួមសាលានមស្សការ។';
+
+  return sendBroadcastMessage(title, content);
+}
+
+// Automated Scheduled Reminders Scheduler (Runs every minute check)
+let lastTriggeredMorning = '';
+let lastTriggeredEvening = '';
+
+setInterval(() => {
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+
+  // Check if today is a Buddhist Sabbath day / Holiday
+  const holiday = db.isHolidayDate(todayStr);
+  if (holiday) return; // Skip reminders on Sabbath/Holiday if desired
+
+  // 05:00 AM Morning Prayer Reminder
+  if (hours === 5 && minutes === 0 && lastTriggeredMorning !== todayStr) {
+    lastTriggeredMorning = todayStr;
+    console.log(`[Auto Scheduler] Triggering 05:00 AM Morning Prayer Reminder for ${todayStr}...`);
+    sendPrayerSessionReminder('morning');
+  }
+
+  // 17:00 (5:00 PM) Evening Prayer Reminder
+  if (hours === 17 && minutes === 0 && lastTriggeredEvening !== todayStr) {
+    lastTriggeredEvening = todayStr;
+    console.log(`[Auto Scheduler] Triggering 05:00 PM Evening Prayer Reminder for ${todayStr}...`);
+    sendPrayerSessionReminder('evening');
+  }
+}, 60000);
