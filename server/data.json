@@ -17,6 +17,15 @@
       "phone": "09899997",
       "status": "active",
       "created_at": "2026-07-31T17:35:03.016Z"
+    },
+    {
+      "id": 3,
+      "telegram_id": 133455333,
+      "name": "fff",
+      "role": "monk",
+      "phone": "",
+      "status": "active",
+      "created_at": "2026-07-31T18:21:35.485Z"
     }
   ],
   "attendances": [],
@@ -66,6 +75,11 @@
       "timestamp": "2026-07-31T18:11:30.615Z",
       "type": "broadcast_sent",
       "message": "បានផ្ញើសារជូនដំណឹងទៅព្រះសង្ឃ 2 អង្គ៖ \"ងង\""
+    },
+    {
+      "timestamp": "2026-07-31T18:21:35.494Z",
+      "type": "monk_registered",
+      "message": "ព្រះសង្ឃអង្គថ្មីបានចុះឈ្មោះ៖ fff (Telegram ID: 133455333, តួនាទី: monk)"
     }
   ],
   "audit_logs": [

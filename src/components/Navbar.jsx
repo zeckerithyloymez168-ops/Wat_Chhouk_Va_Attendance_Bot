@@ -76,27 +76,21 @@ export default function Navbar({ monks, currentMonk, setCurrentMonk, onMonkRegis
               <span>{t?.registerMonk || "+ ចុះឈ្មោះតាម Telegram ID"}</span>
             </button>
 
-            {/* User Switcher */}
-            <div className="flex items-center gap-2 bg-slate-800/90 p-1.5 rounded-xl border border-slate-700 w-full sm:w-auto">
-              <div className="flex items-center gap-1 text-amber-400 pl-2 font-medium">
-                {currentMonk?.role === 'admin' ? <Shield className="w-3.5 h-3.5 text-rose-400" /> : <UserCheck className="w-3.5 h-3.5" />}
-                <span className="hidden sm:inline">{t?.account || "គណនី៖"}</span>
+            {/* User Account Info (Displays ONLY logged-in account) */}
+            {currentMonk && (
+              <div className="flex items-center gap-2 bg-slate-800/90 p-1.5 rounded-xl border border-slate-700 w-full sm:w-auto">
+                <div className="flex items-center gap-1 text-amber-400 pl-2 font-medium">
+                  {currentMonk.role === 'admin' ? <Shield className="w-3.5 h-3.5 text-rose-400" /> : <UserCheck className="w-3.5 h-3.5 text-amber-400" />}
+                  <span className="hidden sm:inline">{t?.account || "គណនី៖"}</span>
+                </div>
+                <div className="bg-slate-900 text-slate-200 text-xs font-bold rounded-lg px-3 py-1 border border-slate-700 font-khmer flex items-center gap-1.5">
+                  <span className="text-amber-300">{currentMonk.name}</span>
+                  <span className="text-[10px] text-slate-400 font-normal">
+                    ({currentMonk.role === 'admin' ? (t?.roleAdmin || 'Admin') : (t?.roleMonk || 'ព្រះសង្ឃ')})
+                  </span>
+                </div>
               </div>
-              <select
-                value={currentMonk?.id || ''}
-                onChange={(e) => {
-                  const found = monks.find(m => m.id === Number(e.target.value));
-                  if (found) setCurrentMonk(found);
-                }}
-                className="bg-slate-900 text-slate-200 text-xs rounded-lg px-2 py-1 border border-slate-700 outline-none focus:border-amber-500 cursor-pointer font-khmer w-full sm:w-auto"
-              >
-                {monks.map(m => (
-                  <option key={m.id} value={m.id}>
-                    {m.name} ({m.role === 'admin' ? (t?.roleAdmin || 'Admin') : (t?.roleMonk || 'ព្រះសង្ឃ')})
-                  </option>
-                ))}
-              </select>
-            </div>
+            )}
           </div>
         </div>
       </header>
