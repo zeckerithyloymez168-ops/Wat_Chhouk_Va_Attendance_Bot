@@ -1,5 +1,5 @@
 // server/db.js
-// Production Database engine supporting Supabase PostgreSQL Database & Clean Local Persistence
+// Production Database engine with Supabase Cloud DB write-through & local persistence
 
 import fs from 'fs';
 import path from 'path';
@@ -19,12 +19,13 @@ export const supabase = (SUPABASE_URL && SUPABASE_KEY && !SUPABASE_URL.includes(
   : null;
 
 if (supabase) {
-  console.log("Connected to Real Supabase Cloud Database:", SUPABASE_URL);
+  console.log("===========================================================");
+  console.log("CONNECTED TO SUPABASE CLOUD DATABASE:", SUPABASE_URL);
+  console.log("===========================================================");
 } else {
-  console.log("Operating on Clean Local Production Storage (No dummy data)");
+  console.log("Operating on Clean Production Storage (No dummy data)");
 }
 
-// Clean Initial State with 0 dummy data
 const cleanInitialData = {
   monks: [],
   attendances: [],
@@ -36,6 +37,9 @@ class ProductionDB {
   constructor() {
     this.data = cleanInitialData;
     this.load();
+    if (supabase) {
+      this.syncFromSupabase();
+    }
   }
 
   load() {
@@ -51,7 +55,7 @@ class ProductionDB {
         this.save();
       }
     } catch (err) {
-      console.warn("Could not load data file:", err.message);
+      console.warn("Could not load local data file:", err.message);
     }
   }
 
@@ -59,20 +63,35 @@ class ProductionDB {
     try {
       fs.writeFileSync(DATA_FILE, JSON.stringify(this.data, null, 2), 'utf8');
     } catch (err) {
-      console.warn("Could not persist data file:", err.message);
+      console.warn("Could not persist local data file:", err.message);
     }
   }
 
-  // Clear all existing data (Purge endpoint/method)
-  clearAllData() {
-    this.data = {
-      monks: [],
-      attendances: [],
-      leave_requests: [],
-      bot_logs: []
-    };
-    this.save();
-    console.log("All sample data purged. Database is now clean.");
+  // Fetch initial state from Supabase Cloud DB on server startup
+  async syncFromSupabase() {
+    if (!supabase) return;
+    try {
+      console.log("Syncing tables from Supabase Cloud DB...");
+      const { data: dbMonks, error: errMonks } = await supabase.from('monks').select('*');
+      if (!errMonks && dbMonks) {
+        this.data.monks = dbMonks;
+      }
+
+      const { data: dbAttendances, error: errAtt } = await supabase.from('attendances').select('*');
+      if (!errAtt && dbAttendances) {
+        this.data.attendances = dbAttendances;
+      }
+
+      const { data: dbLeave, error: errLeave } = await supabase.from('leave_requests').select('*');
+      if (!errLeave && dbLeave) {
+        this.data.leave_requests = dbLeave;
+      }
+
+      this.save();
+      console.log(`Supabase Sync Complete: ${this.data.monks.length} monks, ${this.data.attendances.length} attendances, ${this.data.leave_requests.length} leave requests.`);
+    } catch (e) {
+      console.warn("Supabase Sync Warning:", e.message);
+    }
   }
 
   // Monks API
@@ -98,11 +117,17 @@ class ProductionDB {
       existing.phone = phone || existing.phone;
       existing.role = role || existing.role;
       this.save();
+
+      // Write-through to Supabase if connected
+      if (supabase) {
+        supabase.from('monks').update({ name: existing.name, phone: existing.phone, role: existing.role })
+          .eq('telegram_id', numTgId).then(() => {}).catch(e => console.warn(e));
+      }
+
       return { monk: existing, created: false };
     }
 
     const newId = this.data.monks.length > 0 ? Math.max(...this.data.monks.map(m => m.id)) + 1 : 1;
-    // First monk registered automatically gets 'admin' role if no admins exist
     const finalRole = (this.data.monks.length === 0) ? 'admin' : role;
 
     const newMonk = {
@@ -117,6 +142,11 @@ class ProductionDB {
 
     this.data.monks.push(newMonk);
     this.save();
+
+    // Write-through to Supabase if connected
+    if (supabase) {
+      supabase.from('monks').insert([newMonk]).then(() => {}).catch(e => console.warn("Supabase insert monk error:", e.message));
+    }
 
     this.logBotEvent({
       type: 'monk_registered',
@@ -139,6 +169,11 @@ class ProductionDB {
     };
     this.data.monks.push(newMonk);
     this.save();
+
+    if (supabase) {
+      supabase.from('monks').insert([newMonk]).then(() => {}).catch(e => console.warn(e));
+    }
+
     return newMonk;
   }
 
@@ -147,6 +182,11 @@ class ProductionDB {
     if (index !== -1) {
       this.data.monks[index] = { ...this.data.monks[index], ...updates };
       this.save();
+
+      if (supabase) {
+        supabase.from('monks').update(updates).eq('id', id).then(() => {}).catch(e => console.warn(e));
+      }
+
       return this.data.monks[index];
     }
     return null;
@@ -182,6 +222,7 @@ class ProductionDB {
     }
 
     const fine_amount = nextStatus === 'absent' ? 2000 : 0;
+    let targetRecord;
 
     if (existingIndex !== -1) {
       this.data.attendances[existingIndex].status = nextStatus;
@@ -189,12 +230,13 @@ class ProductionDB {
       this.data.attendances[existingIndex].is_paid = nextStatus !== 'absent';
       this.data.attendances[existingIndex].recorded_by = recordedBy;
       this.data.attendances[existingIndex].updated_at = new Date().toISOString();
+      targetRecord = this.data.attendances[existingIndex];
     } else {
       const newId = this.data.attendances.length > 0
         ? Math.max(...this.data.attendances.map(a => a.id)) + 1
         : 1;
 
-      this.data.attendances.push({
+      targetRecord = {
         id: newId,
         monk_id: numMonkId,
         date,
@@ -204,14 +246,21 @@ class ProductionDB {
         is_paid: nextStatus !== 'absent',
         recorded_by: recordedBy,
         created_at: new Date().toISOString()
-      });
+      };
+      this.data.attendances.push(targetRecord);
     }
 
     this.save();
+
+    if (supabase) {
+      supabase.from('attendances').upsert([targetRecord]).then(() => {}).catch(e => console.warn(e));
+    }
+
     return { monk_id: numMonkId, status: nextStatus, fine_amount };
   }
 
   recordAttendanceBatch({ date, session, records, recorded_by = 1 }) {
+    const upsertList = [];
     records.forEach(rec => {
       const monkId = Number(rec.monk_id);
       const status = rec.status;
@@ -229,12 +278,13 @@ class ProductionDB {
           recorded_by,
           updated_at: new Date().toISOString()
         };
+        upsertList.push(this.data.attendances[existingIndex]);
       } else {
         const newId = this.data.attendances.length > 0
           ? Math.max(...this.data.attendances.map(a => a.id)) + 1
           : 1;
 
-        this.data.attendances.push({
+        const newAtt = {
           id: newId,
           monk_id: monkId,
           date,
@@ -244,11 +294,18 @@ class ProductionDB {
           is_paid: status !== 'absent',
           recorded_by,
           created_at: new Date().toISOString()
-        });
+        };
+        this.data.attendances.push(newAtt);
+        upsertList.push(newAtt);
       }
     });
 
     this.save();
+
+    if (supabase && upsertList.length > 0) {
+      supabase.from('attendances').upsert(upsertList).then(() => {}).catch(e => console.warn(e));
+    }
+
     return this.getAttendances({ date, session });
   }
 
@@ -257,6 +314,11 @@ class ProductionDB {
     if (record) {
       record.is_paid = true;
       this.save();
+
+      if (supabase) {
+        supabase.from('attendances').update({ is_paid: true }).eq('id', attendanceId).then(() => {}).catch(e => console.warn(e));
+      }
+
       return record;
     }
     return null;
@@ -293,6 +355,11 @@ class ProductionDB {
 
     this.data.leave_requests.push(newRequest);
     this.save();
+
+    if (supabase) {
+      supabase.from('leave_requests').insert([newRequest]).then(() => {}).catch(e => console.warn(e));
+    }
+
     return newRequest;
   }
 
@@ -315,7 +382,7 @@ class ProductionDB {
             this.data.attendances[attIndex].is_paid = true;
           } else {
             const newAttId = this.data.attendances.length > 0 ? Math.max(...this.data.attendances.map(a => a.id)) + 1 : 1;
-            this.data.attendances.push({
+            const newAtt = {
               id: newAttId,
               monk_id: monkId,
               date: targetDate,
@@ -325,17 +392,25 @@ class ProductionDB {
               is_paid: true,
               recorded_by: approved_by,
               created_at: new Date().toISOString()
-            });
+            };
+            this.data.attendances.push(newAtt);
+            if (supabase) {
+              supabase.from('attendances').upsert([newAtt]).then(() => {}).catch(e => console.warn(e));
+            }
           }
         });
       }
       this.save();
+
+      if (supabase) {
+        supabase.from('leave_requests').update({ status, approved_by }).eq('id', id).then(() => {}).catch(e => console.warn(e));
+      }
+
       return req;
     }
     return null;
   }
 
-  // Summary & Fines Report
   getMonkSummary(monkId) {
     const monk = this.getMonkById(monkId);
     if (!monk) return null;
