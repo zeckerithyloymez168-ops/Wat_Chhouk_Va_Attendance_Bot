@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, Search, Check, RefreshCw, Download, Printer, PieChart, Award, TrendingUp, CheckCircle2 } from 'lucide-react';
 import { API_BASE } from '../config';
+import { getTodayString } from '../utils';
 
 export default function AdminReports({ monks, onRefreshNeeded }) {
   const [summaries, setSummaries] = useState([]);
@@ -80,7 +81,7 @@ export default function AdminReports({ monks, onRefreshNeeded }) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `wat_chhouk_va_attendance_report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `wat_chhouk_va_attendance_report_${getTodayString()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

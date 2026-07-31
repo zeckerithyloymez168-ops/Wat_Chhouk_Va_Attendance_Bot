@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, AlertTriangle, CheckCircle2, Clock, FileText, Send, DollarSign, XCircle } from 'lucide-react';
 import { API_BASE } from '../config';
+import { getTodayString } from '../utils';
 
 export default function MonkView({ currentMonk, onLeaveSubmitted }) {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Leave Form state
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [startDate, setStartDate] = useState(getTodayString());
+  const [endDate, setEndDate] = useState(getTodayString());
   const [session, setSession] = useState('full_day');
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formMsg, setFormMsg] = useState(null);
 
   const fetchSummary = async (isSilent = false) => {
-    if (!currentMonk) return;
+    if (!currentMonk) {
+      setLoading(false);
+      return;
+    }
     if (!isSilent) setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/monks/${currentMonk.id}/summary`);
@@ -31,12 +35,16 @@ export default function MonkView({ currentMonk, onLeaveSubmitted }) {
   };
 
   useEffect(() => {
+    if (!currentMonk) {
+      setLoading(false);
+      return;
+    }
     fetchSummary(false);
     const interval = setInterval(() => {
       fetchSummary(true);
     }, 3000);
     return () => clearInterval(interval);
-  }, [currentMonk]);
+  }, [currentMonk?.id]);
 
   const handleSubmitLeave = async (e) => {
     e.preventDefault();

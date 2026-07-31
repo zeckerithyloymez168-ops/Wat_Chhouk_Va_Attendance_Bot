@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, Trash2, CheckCircle2, AlertCircle, RefreshCw, Sparkles, Shield, Info } from 'lucide-react';
 import { API_BASE } from '../config';
+import { getTodayString } from '../utils';
 
 export default function AdminHolidays({ lang = 'km', t }) {
   const [holidays, setHolidays] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(getTodayString());
   const [title, setTitle] = useState('');
   const [isSabbath, setIsSabbath] = useState(true);
   const [submitting, setSubmitting] = useState(false);

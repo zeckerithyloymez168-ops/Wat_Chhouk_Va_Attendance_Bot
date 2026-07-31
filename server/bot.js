@@ -13,6 +13,14 @@ if (bot) {
     console.warn(`Telegraf error handling update for ${ctx.updateType}:`, err.message || err);
   });
 
+  // Helper to get local YYYY-MM-DD string
+  const getTodayString = (d = new Date()) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Helper to construct full user name from Telegram profile
   const getTelegramFullName = (from) => {
     if (!from) return 'ព្រះសង្ឃ';
@@ -140,7 +148,7 @@ if (bot) {
 
   bot.action(/^sheet_sess_(morning|evening)$/, (ctx) => {
     const session = ctx.match[1];
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayString();
     return renderTelegramAttendanceSheet(ctx, today, session);
   });
 
@@ -440,7 +448,7 @@ let lastTriggeredEvening = '';
 
 setInterval(() => {
   const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const hours = now.getHours();
   const minutes = now.getMinutes();
 

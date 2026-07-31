@@ -8,16 +8,15 @@ import AdminUsers from './components/AdminUsers';
 import AdminAuditLogs from './components/AdminAuditLogs';
 import AdminHolidays from './components/AdminHolidays';
 import AdminBroadcastModal from './components/AdminBroadcastModal';
-import TelegramSimulator from './components/TelegramSimulator';
 import RegisterModal from './components/RegisterModal';
-import { UserCheck, CalendarCheck, FileCheck, BarChart3, Bot, UserPlus, Users, ShieldAlert, Lock, History, Send, Calendar } from 'lucide-react';
+import { UserCheck, CalendarCheck, FileCheck, BarChart3, UserPlus, Users, ShieldAlert, Lock, History, Send, Calendar } from 'lucide-react';
 import { API_BASE } from './config';
 import { translations } from './i18n';
 
 export default function App() {
   const [monks, setMonks] = useState([]);
   const [currentMonk, setCurrentMonk] = useState(null);
-  const [activeTab, setActiveTab] = useState('monk'); // 'monk' | 'attendance' | 'leave' | 'reports' | 'users' | 'audit' | 'holidays' | 'bot'
+  const [activeTab, setActiveTab] = useState('monk'); // 'monk' | 'attendance' | 'leave' | 'reports' | 'users' | 'audit' | 'holidays'
   const [loading, setLoading] = useState(true);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
@@ -215,22 +214,10 @@ export default function App() {
               <span>{t.broadcastBtn}</span>
             </button>
           )}
-
-          <button
-            onClick={() => setActiveTab('bot')}
-            className={`px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 whitespace-nowrap transition-all ${
-              activeTab === 'bot'
-                ? 'bg-sky-500 text-slate-950 shadow-lg shadow-sky-500/20'
-                : 'text-sky-400 hover:bg-sky-500/10'
-            }`}
-          >
-            <Bot className="w-4 h-4" />
-            <span>{t.telegramBot}</span>
-          </button>
         </div>
 
         {/* Empty state when no monks exist */}
-        {monks.length === 0 && activeTab !== 'bot' && (
+        {monks.length === 0 && (
           <div className="glass-panel p-8 rounded-3xl text-center space-y-4 border border-amber-500/30 max-w-2xl mx-auto my-8">
             <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-3xl mx-auto">
               🛕
@@ -324,14 +311,6 @@ export default function App() {
 
         {isAdmin && activeTab === 'audit' && (
           <AdminAuditLogs />
-        )}
-
-        {/* Telegram Bot Test Tab */}
-        {activeTab === 'bot' && (
-          <TelegramSimulator
-            currentMonk={currentMonk}
-            onSwitchTab={(tab) => setActiveTab(tab)}
-          />
         )}
       </main>
 

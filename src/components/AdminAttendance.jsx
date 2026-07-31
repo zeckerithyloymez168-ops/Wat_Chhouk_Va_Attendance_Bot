@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, XCircle, Clock, Save, Calendar, Users, AlertCircle, Sparkles } from 'lucide-react';
 import { API_BASE } from '../config';
+import { getTodayString } from '../utils';
 
 export default function AdminAttendance({ monks, currentAdmin }) {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(getTodayString());
   const [session, setSession] = useState('morning');
   const [attendanceState, setAttendanceState] = useState({});
   const [loading, setLoading] = useState(false);
