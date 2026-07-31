@@ -114,29 +114,15 @@ export default function RegisterModal({ isOpen, onClose, onMonkRegistered }) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-slate-300 mb-1 font-medium">តួនាទី</label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-amber-500 font-khmer"
-              >
-                <option value="monk">ព្រះសង្ឃ (Monk)</option>
-                <option value="admin">គ្រូសូត្រ/Admin</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-slate-300 mb-1 font-medium">លេខទូរស័ព្ទ</label>
-              <input
-                type="text"
-                placeholder="012 345 678"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-amber-500 font-khmer"
-              />
-            </div>
+          <div>
+            <label className="block text-slate-300 mb-1 font-medium">លេខទូរស័ព្ទ</label>
+            <input
+              type="text"
+              placeholder="012 345 678"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-amber-500 font-khmer"
+            />
           </div>
 
           <div className="pt-2 flex items-center justify-end gap-2">

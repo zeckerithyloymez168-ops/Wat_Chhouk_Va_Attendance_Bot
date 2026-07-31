@@ -112,14 +112,14 @@ class ProductionDB {
     return this.data.monks.find(m => m.telegram_id === Number(telegramId));
   }
 
-  registerMonk({ telegram_id, name, phone = '', role = 'monk' }) {
+  registerMonk({ telegram_id, name, phone = '', role = null }) {
     const numTgId = Number(telegram_id);
     const existing = this.getMonkByTelegramId(numTgId);
 
     if (existing) {
       existing.name = name || existing.name;
       existing.phone = phone || existing.phone;
-      existing.role = role || existing.role;
+      if (role) existing.role = role;
       this.save();
 
       // Write-through to Supabase if connected
@@ -132,7 +132,8 @@ class ProductionDB {
     }
 
     const newId = this.data.monks.length > 0 ? Math.max(...this.data.monks.map(m => m.id)) + 1 : 1;
-    const finalRole = (this.data.monks.length === 0) ? 'admin' : role;
+    // The very first registered user becomes 'admin', all subsequent users become 'monk'
+    const finalRole = (this.data.monks.length === 0) ? 'admin' : (role || 'monk');
 
     const newMonk = {
       id: newId,
