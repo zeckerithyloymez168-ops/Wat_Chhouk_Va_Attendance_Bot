@@ -66,7 +66,7 @@ export default function AdminLeaveApproval({ monks, currentAdmin, onActionDone }
           <p className="text-xs text-slate-400">ពិនិត្យ និងអនុម័តពាក្យសុំច្បាប់របស់ព្រះសង្ឃ ដែលផ្ញើមកតាម Telegram</p>
         </div>
 
-        <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs w-full sm:w-auto">
           {[
             { id: 'all', label: 'ទាំងអស់' },
             { id: 'pending', label: '⏳ រង់ចាំពិនិត្យ' },

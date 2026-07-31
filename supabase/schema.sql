@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS monks (
     name VARCHAR(255) NOT NULL,            -- ព្រះនាម / ឈ្មោះ
     role VARCHAR(50) NOT NULL DEFAULT 'monk' CHECK (role IN ('admin', 'monk')),
     phone VARCHAR(50),                     -- លេខទូរស័ព្ទ
+    password VARCHAR(255),                  -- ពាក្យសម្ងាត់ Admin
     status VARCHAR(50) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -45,3 +46,9 @@ CREATE TABLE IF NOT EXISTS leave_requests (
 CREATE INDEX IF NOT EXISTS idx_attendances_monk_date ON attendances(monk_id, date);
 CREATE INDEX IF NOT EXISTS idx_leave_requests_monk ON leave_requests(monk_id);
 CREATE INDEX IF NOT EXISTS idx_monks_telegram_id ON monks(telegram_id);
+
+-- 4. Initial Default Admin User Seed
+INSERT INTO monks (telegram_id, name, role, phone, password)
+VALUES (100000001, 'Admin វត្តឈូកវ៉ា', 'admin', '012345678', 'admin123')
+ON CONFLICT (telegram_id) DO NOTHING;
+

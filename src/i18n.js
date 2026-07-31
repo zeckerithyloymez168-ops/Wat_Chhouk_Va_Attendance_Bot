@@ -37,7 +37,18 @@ export const translations = {
     cancel: "បោះបង់",
     search: "ស្វែងរក...",
     refresh: "Refresh",
-    actions: "សកម្មភាព"
+    actions: "សកម្មភាព",
+    logout: "ចាកចេញ",
+    adminLogin: "Admin Login (ចូលប្រព័ន្ធ)",
+    enterAdminPassword: "សូមបញ្ចូលពាក្យសម្ងាត់ Admin ដើម្បីចូលប្រើប្រាស់",
+    password: "ពាក្យសម្ងាត់",
+    loginBtn: "ចូលប្រព័ន្ធ (Login)",
+    changePassword: "ប្តូរពាក្យសម្ងាត់",
+    currentPassword: "ពាក្យសម្ងាត់បច្ចុប្បន្ន",
+    newPassword: "ពាក្យសម្ងាត់ថ្មី",
+    confirmNewPassword: "ផ្ទៀងផ្ទាត់ពាក្យសម្ងាត់ថ្មី",
+    changePasswordSuccess: "បានប្តូរពាក្យសម្ងាត់ដោយជោគជ័យ!",
+    passwordMismatch: "ពាក្យសម្ងាត់ថ្មីទាំងពីរមិនដូចគ្នាទេ!"
   },
   en: {
     appTitle: "Wat Chhouk Va",
@@ -77,6 +88,17 @@ export const translations = {
     cancel: "Cancel",
     search: "Search...",
     refresh: "Refresh",
-    actions: "Actions"
+    actions: "Actions",
+    logout: "Logout",
+    adminLogin: "Admin Login",
+    enterAdminPassword: "Please enter Admin password to access",
+    password: "Password",
+    loginBtn: "Login",
+    changePassword: "Change Password",
+    currentPassword: "Current Password",
+    newPassword: "New Password",
+    confirmNewPassword: "Confirm New Password",
+    changePasswordSuccess: "Password changed successfully!",
+    passwordMismatch: "New passwords do not match!"
   }
 };

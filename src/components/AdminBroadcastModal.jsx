@@ -69,7 +69,7 @@ export default function AdminBroadcastModal({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm font-khmer">
-      <div className="glass-panel w-full max-w-lg p-6 rounded-2xl border border-sky-500/30 shadow-2xl relative space-y-4">
+      <div className="glass-panel w-full max-w-lg p-6 rounded-2xl border border-sky-500/30 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 text-slate-400 hover:text-slate-200 p-1 rounded-lg bg-slate-800"

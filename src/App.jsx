@@ -8,8 +8,10 @@ import AdminUsers from './components/AdminUsers';
 import AdminAuditLogs from './components/AdminAuditLogs';
 import AdminHolidays from './components/AdminHolidays';
 import AdminBroadcastModal from './components/AdminBroadcastModal';
+import AdminLoginModal from './components/AdminLoginModal';
+import ChangePasswordModal from './components/ChangePasswordModal';
 import RegisterModal from './components/RegisterModal';
-import { UserCheck, CalendarCheck, FileCheck, BarChart3, UserPlus, Users, ShieldAlert, Lock, History, Send, Calendar } from 'lucide-react';
+import { UserCheck, CalendarCheck, FileCheck, BarChart3, UserPlus, Users, ShieldAlert, Lock, History, Send, Calendar, LogIn, Shield } from 'lucide-react';
 import { API_BASE } from './config';
 import { translations } from './i18n';
 
@@ -20,13 +22,17 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
+  const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [pendingAdminTab, setPendingAdminTab] = useState(null);
 
   // i18n & Theme state
   const [lang, setLang] = useState('km');
   const [theme, setTheme] = useState('dark');
   const t = translations[lang] || translations.km;
 
-  const isAdmin = currentMonk?.role === 'admin';
+  const isAdmin = currentMonk?.role === 'admin' && isAdminAuthenticated;
   const isAdminTab = ['attendance', 'leave', 'reports', 'users', 'audit', 'holidays'].includes(activeTab);
 
   const fetchMonks = async (isSilent = false) => {
@@ -82,11 +88,45 @@ export default function App() {
   }, []);
 
   const handleSelectMonk = (monk) => {
+    if (monk && monk.role === 'admin' && !isAdminAuthenticated) {
+      setIsAdminLoginOpen(true);
+      setPendingAdminTab(null);
+      return;
+    }
     setCurrentMonk(monk);
     if (monk && monk.role !== 'admin') {
       if (['attendance', 'leave', 'reports', 'users', 'audit', 'holidays'].includes(activeTab)) {
         setActiveTab('monk');
       }
+    }
+  };
+
+  const handleTabClick = (tab) => {
+    const isTargetAdminTab = ['attendance', 'leave', 'reports', 'users', 'audit', 'holidays'].includes(tab);
+    if (isTargetAdminTab && (!currentMonk || currentMonk.role !== 'admin' || !isAdminAuthenticated)) {
+      setPendingAdminTab(tab);
+      setIsAdminLoginOpen(true);
+      return;
+    }
+    setActiveTab(tab);
+  };
+
+  const handleLogout = () => {
+    setCurrentMonk(null);
+    setIsAdminAuthenticated(false);
+    setActiveTab('monk');
+  };
+
+  const handleAdminLoginSuccess = () => {
+    setIsAdminAuthenticated(true);
+    setIsAdminLoginOpen(false);
+    const adminMonk = monks.find(m => m.role === 'admin') || currentMonk;
+    if (adminMonk) setCurrentMonk(adminMonk);
+    if (pendingAdminTab) {
+      setActiveTab(pendingAdminTab);
+      setPendingAdminTab(null);
+    } else {
+      setActiveTab('attendance');
     }
   };
 
@@ -105,19 +145,19 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col font-khmer selection:bg-amber-500 selection:text-slate-950 ${
+    <div className={`min-h-screen flex flex-col font-khmer selection:bg-amber-500 selection:text-slate-950 bg-ambient-glow ${
       theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-900 text-slate-100'
     }`}>
       <Navbar
         monks={monks}
         currentMonk={currentMonk}
         setCurrentMonk={handleSelectMonk}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
         onMonkRegistered={(newMonk) => {
           fetchMonks();
           if (newMonk) handleSelectMonk(newMonk);
         }}
+        onLogout={handleLogout}
+        onOpenChangePassword={() => setIsChangePasswordOpen(true)}
         lang={lang}
         setLang={setLang}
         t={t}
@@ -126,10 +166,10 @@ export default function App() {
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-24 md:pb-8">
-        {/* Navigation Tab Bar */}
-        <div className="glass-panel p-1.5 rounded-2xl flex items-center gap-1.5 overflow-x-auto text-xs scrollbar-none border border-slate-800">
+        {/* Navigation Tab Bar (Desktop / Tablet) */}
+        <div className="hidden md:flex glass-panel p-1.5 rounded-2xl items-center gap-1.5 overflow-x-auto text-xs scrollbar-none border border-slate-800">
           <button
-            onClick={() => setActiveTab('monk')}
+            onClick={() => handleTabClick('monk')}
             className={`px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 whitespace-nowrap transition-all ${
               activeTab === 'monk'
                 ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
@@ -141,7 +181,7 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setActiveTab('reports')}
+            onClick={() => handleTabClick('reports')}
             className={`px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 whitespace-nowrap transition-all ${
               activeTab === 'reports'
                 ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
@@ -153,7 +193,7 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setActiveTab('users')}
+            onClick={() => handleTabClick('users')}
             className={`px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 whitespace-nowrap transition-all ${
               activeTab === 'users'
                 ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
@@ -165,7 +205,7 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setActiveTab('attendance')}
+            onClick={() => handleTabClick('attendance')}
             className={`px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 whitespace-nowrap transition-all ${
               activeTab === 'attendance'
                 ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
@@ -177,7 +217,7 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setActiveTab('leave')}
+            onClick={() => handleTabClick('leave')}
             className={`px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 whitespace-nowrap transition-all ${
               activeTab === 'leave'
                 ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
@@ -189,7 +229,7 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setActiveTab('holidays')}
+            onClick={() => handleTabClick('holidays')}
             className={`px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 whitespace-nowrap transition-all ${
               activeTab === 'holidays'
                 ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
@@ -201,7 +241,7 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setActiveTab('audit')}
+            onClick={() => handleTabClick('audit')}
             className={`px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 whitespace-nowrap transition-all ${
               activeTab === 'audit'
                 ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
@@ -320,6 +360,76 @@ export default function App() {
           <AdminAuditLogs />
         )}
       </main>
+
+      {/* Sticky Mobile Bottom Navigation Bar (Telegram Mini App & Phone Viewport) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 border-t border-slate-800/90 backdrop-blur-xl px-2 py-1.5 flex items-center justify-around text-[10px] font-bold font-khmer shadow-2xl">
+        <button
+          onClick={() => handleTabClick('monk')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all ${
+            activeTab === 'monk' ? 'text-amber-400 font-extrabold scale-105' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <UserCheck className="w-5 h-5" />
+          <span>វត្តមាន</span>
+        </button>
+
+        <button
+          onClick={() => handleTabClick('attendance')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all ${
+            activeTab === 'attendance' ? 'text-amber-400 font-extrabold scale-105' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <CalendarCheck className="w-5 h-5" />
+          <span>ស្រង់វត្តមាន</span>
+        </button>
+
+        <button
+          onClick={() => handleTabClick('leave')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all ${
+            activeTab === 'leave' ? 'text-amber-400 font-extrabold scale-105' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <FileCheck className="w-5 h-5" />
+          <span>សុំច្បាប់</span>
+        </button>
+
+        <button
+          onClick={() => handleTabClick('reports')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all ${
+            activeTab === 'reports' ? 'text-amber-400 font-extrabold scale-105' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <BarChart3 className="w-5 h-5" />
+          <span>របាយការណ៍</span>
+        </button>
+
+        <button
+          onClick={() => handleTabClick('users')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all ${
+            activeTab === 'users' ? 'text-amber-400 font-extrabold scale-105' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Users className="w-5 h-5" />
+          <span>សមាជិក</span>
+        </button>
+      </nav>
+
+      <AdminLoginModal
+        isOpen={isAdminLoginOpen}
+        onClose={() => {
+          setIsAdminLoginOpen(false);
+          setPendingAdminTab(null);
+        }}
+        onSuccess={handleAdminLoginSuccess}
+        t={t}
+      />
+
+      <ChangePasswordModal
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
+        currentMonk={currentMonk}
+        t={t}
+      />
 
       <RegisterModal
         isOpen={isRegisterOpen}

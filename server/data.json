@@ -2,12 +2,13 @@
   "monks": [
     {
       "id": 1,
-      "telegram_id": 1088888,
-      "name": "ggg",
+      "telegram_id": 100000001,
+      "name": "Admin វត្តឈូកវ៉ា",
       "role": "admin",
-      "phone": "0988888888",
+      "phone": "012345678",
+      "password": "12345678",
       "status": "active",
-      "created_at": "2026-07-31T17:21:14.510Z"
+      "created_at": "2026-08-01T00:00:00.000Z"
     },
     {
       "id": 2,
@@ -26,6 +27,15 @@
       "phone": "",
       "status": "active",
       "created_at": "2026-07-31T18:21:35.485Z"
+    },
+    {
+      "id": 4,
+      "telegram_id": 12222111,
+      "name": "ff",
+      "role": "monk",
+      "phone": "",
+      "status": "active",
+      "created_at": "2026-07-31T18:56:00.010Z"
     }
   ],
   "attendances": [],
@@ -80,6 +90,16 @@
       "timestamp": "2026-07-31T18:21:35.494Z",
       "type": "monk_registered",
       "message": "ព្រះសង្ឃអង្គថ្មីបានចុះឈ្មោះ៖ fff (Telegram ID: 133455333, តួនាទី: monk)"
+    },
+    {
+      "timestamp": "2026-07-31T18:56:00.014Z",
+      "type": "monk_registered",
+      "message": "ព្រះសង្ឃអង្គថ្មីបានចុះឈ្មោះ៖ ff (Telegram ID: 12222111, តួនាទី: monk)"
+    },
+    {
+      "timestamp": "2026-07-31T19:06:02.137Z",
+      "type": "admin_password_changed",
+      "message": "Admin (Admin វត្តឈូកវ៉ា) បានប្តូរពាក្យសម្ងាត់ដោយជោគជ័យ។"
     }
   ],
   "audit_logs": [

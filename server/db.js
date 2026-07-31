@@ -55,11 +55,35 @@ class ProductionDB {
         if (!Array.isArray(this.data.bot_logs)) this.data.bot_logs = [];
         if (!Array.isArray(this.data.audit_logs)) this.data.audit_logs = [];
         if (!Array.isArray(this.data.holidays)) this.data.holidays = [];
+        this.ensureDefaultAdmin();
       } else {
+        this.ensureDefaultAdmin();
         this.save();
       }
     } catch (err) {
       console.warn("Could not load local data file:", err.message);
+    }
+  }
+
+  ensureDefaultAdmin() {
+    let admin = this.data.monks.find(m => m.role === 'admin');
+    if (!admin) {
+      const maxId = this.data.monks.length > 0 ? Math.max(...this.data.monks.map(m => m.id || 0)) : 0;
+      admin = {
+        id: maxId + 1,
+        telegram_id: 100000001,
+        name: "Admin វត្តឈូកវ៉ា",
+        role: "admin",
+        phone: "012345678",
+        password: "admin123",
+        status: "active",
+        created_at: new Date().toISOString()
+      };
+      this.data.monks.unshift(admin);
+      this.save();
+    } else if (!admin.password) {
+      admin.password = "admin123";
+      this.save();
     }
   }
 
@@ -101,6 +125,46 @@ class ProductionDB {
   // Monks API
   getMonks() {
     return this.data.monks;
+  }
+
+  verifyAdminPassword(password, monkId) {
+    let admin = monkId ? this.data.monks.find(m => m.id === Number(monkId)) : null;
+    if (!admin) {
+      admin = this.data.monks.find(m => m.role === 'admin') || this.data.monks[0];
+    }
+    if (!admin) return false;
+    const currentPass = admin.password || 'admin123';
+    const inputPass = password ? password.trim() : '';
+    return currentPass === inputPass;
+  }
+
+  changeAdminPassword(monkId, currentPassword, newPassword) {
+    const admin = this.data.monks.find(m => m.role === 'admin' && (monkId ? m.id === Number(monkId) : true));
+    if (!admin) return { success: false, message: 'Admin account not found' };
+
+    const currentPass = admin.password || 'admin123';
+    if (currentPass !== currentPassword) {
+      return { success: false, message: 'ពាក្យសម្ងាត់ចាស់មិនត្រឹមត្រូវឡើយ (Incorrect current password)' };
+    }
+
+    if (!newPassword || newPassword.trim().length < 4) {
+      return { success: false, message: 'ពាក្យសម្ងាត់ថ្មីត្រូវតែមានយ៉ាងតិច ៤ ខ្ទង់ (New password must be at least 4 characters)' };
+    }
+
+    admin.password = newPassword.trim();
+    this.save();
+
+    if (supabase) {
+      supabase.from('monks').update({ password: admin.password })
+        .eq('id', admin.id).then(() => {}).catch(e => console.warn(e));
+    }
+
+    this.logBotEvent({
+      type: 'admin_password_changed',
+      message: `Admin (${admin.name}) បានប្តូរពាក្យសម្ងាត់ដោយជោគជ័យ។`
+    });
+
+    return { success: true, message: 'បានប្តូរពាក្យសម្ងាត់ដោយជោគជ័យ (Password changed successfully)' };
   }
 
   getMonkById(id) {

@@ -231,7 +231,7 @@ export default function AdminAttendance({ monks, currentAdmin }) {
                       }`}
                     >
                       <XCircle className="w-3.5 h-3.5" />
-                      <span>អវត្តមាន (២,០០០៛)</span>
+                      <span>អវត្តមាន</span>
                     </button>
 
                     <button

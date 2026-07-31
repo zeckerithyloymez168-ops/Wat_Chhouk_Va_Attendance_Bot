@@ -40,6 +40,31 @@ app.get('/api/monks/:id/summary', (req, res) => {
   res.json({ success: true, ...summary });
 });
 
+// Admin Authentication & Password Routes
+app.post('/api/admin/login', (req, res) => {
+  const { password, monk_id } = req.body;
+  if (!password) {
+    return res.status(400).json({ success: false, message: 'Password is required' });
+  }
+  const isValid = db.verifyAdminPassword(password, monk_id);
+  if (!isValid) {
+    return res.status(401).json({ success: false, message: 'ពាក្យសម្ងាត់ Admin មិនត្រឹមត្រូវឡើយ (Incorrect Admin password)' });
+  }
+  res.json({ success: true, message: 'Admin login successful' });
+});
+
+app.post('/api/admin/change-password', (req, res) => {
+  const { monk_id, current_password, new_password } = req.body;
+  if (!current_password || !new_password) {
+    return res.status(400).json({ success: false, message: 'Current password and new password are required' });
+  }
+  const result = db.changeAdminPassword(monk_id, current_password, new_password);
+  if (!result.success) {
+    return res.status(400).json({ success: false, message: result.message });
+  }
+  res.json({ success: true, message: result.message });
+});
+
 app.post('/api/monks/register', (req, res) => {
   try {
     const { telegram_id, name, phone, role } = req.body;
